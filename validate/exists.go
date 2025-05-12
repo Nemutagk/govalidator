@@ -3,13 +3,13 @@ package validate
 import (
 	"context"
 
-	"github.com/Nemutagk/govalidator/db"
+	"github.com/Nemutagk/godb"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"gorm.io/gorm"
 )
 
-func Exists(input string, payload map[string]interface{}, options []string, errors map[string]interface{}, addError func(string, string, map[string]interface{}, string) map[string]interface{}, dbManager *db.ConnectionManager) map[string]interface{} {
+func Exists(input string, payload map[string]interface{}, options []string, errors map[string]interface{}, addError func(string, string, map[string]interface{}, string) map[string]interface{}, dbManager *godb.ConnectionManager) map[string]interface{} {
 	if len(options) != 3 {
 		errors = addError(input, "exists", errors, "the connections configuration is not correct")
 		return errors

@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/Nemutagk/govalidator/db"
+	"github.com/Nemutagk/godb"
 	"github.com/Nemutagk/govalidator/validate"
 )
 
@@ -20,7 +20,7 @@ func ValidateRequestPrepare(r http.Request) (map[string]interface{}, error) {
 	return payload, nil
 }
 
-func ValidateRequest(body map[string]interface{}, rules map[string]string, dbManager *db.ConnectionManager) (map[string]interface{}, map[string]interface{}) {
+func ValidateRequest(body map[string]interface{}, rules map[string]string, dbManager *godb.ConnectionManager) (map[string]interface{}, map[string]interface{}) {
 
 	rules_intpus := make(map[string]interface{})
 

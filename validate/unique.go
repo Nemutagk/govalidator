@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/Nemutagk/govalidator/db"
+	"github.com/Nemutagk/godb"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"gorm.io/gorm"
@@ -16,7 +16,7 @@ import (
 * Params: db connection, table name, column name
 * Example: unique:princial,users,email
  */
-func Unique(input string, payload map[string]interface{}, options []string, list_errors map[string]interface{}, addError func(string, string, map[string]interface{}, string) map[string]interface{}, dbConn *db.ConnectionManager) map[string]interface{} {
+func Unique(input string, payload map[string]interface{}, options []string, list_errors map[string]interface{}, addError func(string, string, map[string]interface{}, string) map[string]interface{}, dbConn *godb.ConnectionManager) map[string]interface{} {
 	if len(options) < 3 || len(options) > 4 {
 		panic("the options for connection is invalid")
 	}
