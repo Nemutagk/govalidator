@@ -53,8 +53,8 @@ func Unique(input string, payload map[string]interface{}, options []string, list
 			err = conn.(*mongo.Database).Collection(table).FindOne(context.TODO(), bson.M{column: email, "_id": bson.M{"$ne": id}}).Decode(&row)
 		}
 	}
-	fmt.Println("db err: ", err)
-	fmt.Println("row: ", row)
+	// fmt.Println("db err: ", err)
+	// fmt.Println("row: ", row)
 
 	// for the validations
 	// if ok == mysql

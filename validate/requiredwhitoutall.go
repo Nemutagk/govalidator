@@ -1,7 +1,6 @@
 package validate
 
 import (
-	"fmt"
 	"strings"
 )
 
@@ -18,7 +17,7 @@ func RequiredWithoutAll(input string, payload map[string]interface{}, options []
 		}
 	}
 
-	fmt.Println(input+": not_defined", not_defined)
+	// fmt.Println(input+": not_defined", not_defined)
 
 	if _, exists_input := payload[input]; !exists_input && !not_defined {
 		all_inputs := strings.Join(options, ", ")
