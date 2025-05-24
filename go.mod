@@ -9,7 +9,7 @@ require (
 )
 
 require (
-	github.com/Nemutagk/godb v1.0.0 // indirect
+	github.com/Nemutagk/godb v1.3.0 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect

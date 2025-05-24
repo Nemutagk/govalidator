@@ -8,7 +8,7 @@
 		"ghcr.io/devcontainers/features/github-cli:1": {}
 	},
 	"mounts": [
-		"source=/Users/jcabrera/Documents/ServerPrivado/modulos-go,target=/opt/modules,type=bind,consistency=cached"
+		"source=/home/nemutagk/servidor_http/Syberian,target=/opt/modules,type=bind,consistency=cached"
 	]
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	// "features": {},
