@@ -30,27 +30,28 @@ func Unique(input string, payload map[string]interface{}, options []string, list
 	var row map[string]interface{}
 
 	conn, _ := dbConn.GetConnection(options[0])
+	raw_conn := conn.GetRawConnection()
 
 	var err error
-	_, ok := conn.(*gorm.DB)
+	_, ok := raw_conn.(*gorm.DB)
 
 	if ok {
 		table := options[1]
 		column := options[2]
 		if len(options) == 3 {
-			err = conn.(*gorm.DB).Table(table).Select(column).Where(column+" = ?", email).Limit(1).Take(&row).Error
+			err = raw_conn.(*gorm.DB).Table(table).Select(column).Where(column+" = ?", email).Limit(1).Take(&row).Error
 		} else if len(options) == 4 {
 			id := options[3]
-			err = conn.(*gorm.DB).Table(table).Select(column).Where(column+" = ? AND id != ?", email, id).Limit(1).Take(&row).Error
+			err = raw_conn.(*gorm.DB).Table(table).Select(column).Where(column+" = ? AND id != ?", email, id).Limit(1).Take(&row).Error
 		}
 	} else {
 		table := options[1]
 		column := options[2]
 		if len(options) == 3 {
-			err = conn.(*mongo.Database).Collection(table).FindOne(context.TODO(), bson.M{column: email}).Decode(&row)
+			err = raw_conn.(*mongo.Database).Collection(table).FindOne(context.TODO(), bson.M{column: email}).Decode(&row)
 		} else if len(options) == 4 {
 			id := options[3]
-			err = conn.(*mongo.Database).Collection(table).FindOne(context.TODO(), bson.M{column: email, "_id": bson.M{"$ne": id}}).Decode(&row)
+			err = raw_conn.(*mongo.Database).Collection(table).FindOne(context.TODO(), bson.M{column: email, "_id": bson.M{"$ne": id}}).Decode(&row)
 		}
 	}
 	// fmt.Println("db err: ", err)

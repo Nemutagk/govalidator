@@ -16,8 +16,9 @@ func Exists(input string, payload map[string]interface{}, options []string, erro
 	}
 
 	conn, _ := dbManager.GetConnection(options[0])
+	raw_connection := conn.GetRawConnection()
 
-	if dbConn, ok := conn.(*gorm.DB); ok {
+	if dbConn, ok := raw_connection.(*gorm.DB); ok {
 		var exists_row struct{}
 		err := dbConn.Table(options[1]).Where(options[2]+" = ?", payload[input]).Limit(1).Find(&exists_row).Error
 
@@ -26,7 +27,7 @@ func Exists(input string, payload map[string]interface{}, options []string, erro
 				errors = addError(input, "exists", errors, "The value does not exist") // corrected "does not exists" to "does not exist"
 			}
 		}
-	} else if dbConn, ok := conn.(*mongo.Database); ok {
+	} else if dbConn, ok := raw_connection.(*mongo.Database); ok {
 		coll := dbConn.Collection(options[1])
 
 		count_rows, err_count := coll.CountDocuments(context.TODO(), bson.M{options[2]: payload[input]})
