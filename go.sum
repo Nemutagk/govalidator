@@ -1,3 +1,5 @@
+github.com/Nemutagk/godb v1.3.1 h1:BCgNvpxTaD3bgPMVI4xMmWv/y8/5OeAPkUuO9tl1VPI=
+github.com/Nemutagk/godb v1.3.1/go.mod h1:tqawBQ0v3cW57fXSJ1ZRaOV4MleHzGCVl9DTRiX1oJk=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/gofrs/uuid v4.4.0+incompatible h1:3qXRTX8/NbyulANqlc0lchS1gqAVxRgsuW1YrTJupqA=

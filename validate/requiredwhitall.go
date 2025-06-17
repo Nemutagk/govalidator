@@ -4,7 +4,7 @@ import "strings"
 
 func RequiredWithAll(input string, payload map[string]interface{}, options []string, errors map[string]interface{}, addError func(string, string, map[string]interface{}, string) map[string]interface{}) map[string]interface{} {
 	if len(options) != 1 {
-		return addError(input, "required_with_all", errors, "The options is not defined")
+		return addError(input, "required_with_all", errors, "La opción no está definida")
 	}
 
 	all_defined := true
@@ -17,7 +17,7 @@ func RequiredWithAll(input string, payload map[string]interface{}, options []str
 
 	if _, exists_input := payload[input]; !exists_input && all_defined {
 		all_inputs := strings.Join(options, ", ")
-		errors = addError(input, "required_with_all", errors, "The field \""+input+"\" must be defined when the fields \""+all_inputs+"\" are defined")
+		errors = addError(input, "required_with_all", errors, "El campo \""+input+"\" debe estar definido cuando los campos \""+all_inputs+"\" están definidos")
 		return errors
 	}
 

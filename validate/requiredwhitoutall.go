@@ -1,13 +1,13 @@
 package validate
 
 import (
-	"fmt"
+	"log"
 	"strings"
 )
 
 func RequiredWithoutAll(input string, payload map[string]interface{}, options []string, errors map[string]interface{}, addError func(string, string, map[string]interface{}, string) map[string]interface{}) map[string]interface{} {
 	if len(options) != 1 {
-		return addError(input, "required_without_all", errors, "The options is not defined")
+		return addError(input, "required_without_all", errors, "La opción no está definida")
 	}
 
 	not_defined := true
@@ -18,11 +18,11 @@ func RequiredWithoutAll(input string, payload map[string]interface{}, options []
 		}
 	}
 
-	fmt.Println(input+": not_defined", not_defined)
+	log.Println(input+": not_defined", not_defined)
 
 	if _, exists_input := payload[input]; !exists_input && !not_defined {
 		all_inputs := strings.Join(options, ", ")
-		errors = addError(input, "required_without_all", errors, "The field \""+input+"\" must be defined when the fields \""+all_inputs+"\" are not defined")
+		errors = addError(input, "required_without_all", errors, "El campo \""+input+"\" debe estar definido cuando los campos \""+all_inputs+"\" no están definidos")
 		return errors
 	}
 

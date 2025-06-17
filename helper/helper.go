@@ -2,7 +2,7 @@ package helper
 
 import (
 	"encoding/json"
-	"fmt"
+	"log"
 
 	"github.com/gofrs/uuid"
 )
@@ -14,11 +14,11 @@ func GenerateUuid() string {
 func PrettyPrint(data any) {
 	prettyJSON, err := json.MarshalIndent(data, "", "  ")
 	if err != nil {
-		fmt.Println("Error formatting JSON:", err)
+		log.Println("Error formatting JSON:", err)
 		return
 	}
 
-	fmt.Println(string(prettyJSON))
+	log.Println(string(prettyJSON))
 }
 
 func SliceContains(slice []string, item string) bool {

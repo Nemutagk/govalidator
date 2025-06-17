@@ -1,24 +1,24 @@
 package validate
 
-import "fmt"
+import "log"
 
 func Confirmation(input string, payload map[string]interface{}, options []string, errors map[string]interface{}, addError func(string, string, map[string]interface{}, string) map[string]interface{}) map[string]interface{} {
 	if _, exists_input := payload[input]; !exists_input {
-		fmt.Println("validate confirmation:input password does not exists")
+		log.Println("validate confirmation:input password does not exists")
 		return errors
 	}
 
 	if payload[input] == "" {
-		errors = addError(input, "confirmation", errors, "The input "+input+" is empty")
+		errors = addError(input, "confirmation", errors, "El campo "+input+" está vacío")
 		return errors
 	}
 
 	if val, exists_confirmation := payload["password_confirmation"]; !exists_confirmation && (val == nil || val == "" || val == false) {
-		errors = addError("password_confirmation", "confirmation", errors, "The input password_confirmation is not defined")
+		errors = addError("password_confirmation", "confirmation", errors, "El campo password_confirmation no está definido")
 	}
 
 	if payload[input] != payload["password_confirmation"] {
-		errors = addError(input, "confirmation", errors, "The password is not same for confirmation")
+		errors = addError(input, "confirmation", errors, "La contraseña no coincide con la confirmación")
 	}
 
 	return errors

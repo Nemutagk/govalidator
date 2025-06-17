@@ -3,10 +3,11 @@ package govalidator
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 
-	"github.com/Nemutagk/govalidator/db"
+	"github.com/Nemutagk/godb"
 	"github.com/Nemutagk/govalidator/validate"
 )
 
@@ -20,8 +21,8 @@ func ValidateRequestPrepare(r http.Request) (map[string]interface{}, error) {
 	return payload, nil
 }
 
-func ValidateRequest(body map[string]interface{}, rules map[string]string, dbManager *db.ConnectionManager) (map[string]interface{}, map[string]interface{}) {
-
+func ValidateRequest(body map[string]interface{}, rules map[string]string, dbManager *godb.ConnectionManager) (map[string]interface{}, map[string]interface{}) {
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	rules_intpus := make(map[string]interface{})
 
 	body_encode, err := json.Marshal(body)
@@ -92,7 +93,7 @@ func ValidateRequest(body map[string]interface{}, rules map[string]string, dbMan
 			case "boolean":
 				errors = validate.Boolean(input, body_parse, opts, errors, addError)
 			case "sometimes":
-				fmt.Println("Sometimes rule is not implemented yet")
+				log.Println("Sometimes rule is not implemented yet")
 			case "required_with":
 				errors = validate.RequiredWith(input, body_parse, opts, errors, addError)
 			case "required_with_all":

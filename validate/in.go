@@ -12,12 +12,12 @@ func In(input string, payload map[string]interface{}, options []string, errors m
 	stringValue, ok := value.(string)
 
 	if !ok {
-		errors = addError(input, "in", errors, "The value is not a string")
+		errors = addError(input, "in", errors, "El valor no es una cadena de texto")
 		return errors
 	}
 
 	if !helper.SliceContains(options, stringValue) {
-		errors = addError(input, "in", errors, "The value is invalid")
+		errors = addError(input, "in", errors, "El valor no es válido")
 	}
 
 	return errors

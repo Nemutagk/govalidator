@@ -3,19 +3,19 @@ package validate
 import (
 	"context"
 
-	"github.com/Nemutagk/govalidator/db"
+	"github.com/Nemutagk/godb"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"gorm.io/gorm"
 )
 
-func Exists(input string, payload map[string]interface{}, options []string, errors map[string]interface{}, addError func(string, string, map[string]interface{}, string) map[string]interface{}, dbManager *db.ConnectionManager) map[string]interface{} {
+func Exists(input string, payload map[string]interface{}, options []string, errors map[string]interface{}, addError func(string, string, map[string]interface{}, string) map[string]interface{}, dbManager *godb.ConnectionManager) map[string]interface{} {
 	if len(options) != 3 {
-		errors = addError(input, "exists", errors, "the connections configuration is not correct")
+		errors = addError(input, "exists", errors, "La configuración de conexiones no es correcta")
 		return errors
 	}
 
-	conn, _ := dbManager.GetConnection(options[0])
+	conn, _ := dbManager.GetRawConnection(options[0])
 
 	if dbConn, ok := conn.(*gorm.DB); ok {
 		var exists_row struct{}
@@ -23,7 +23,7 @@ func Exists(input string, payload map[string]interface{}, options []string, erro
 
 		if err != nil {
 			if err == gorm.ErrRecordNotFound {
-				errors = addError(input, "exists", errors, "The value does not exist") // corrected "does not exists" to "does not exist"
+				errors = addError(input, "exists", errors, "El valor no existe")
 			}
 		}
 	} else if dbConn, ok := conn.(*mongo.Database); ok {
@@ -32,11 +32,11 @@ func Exists(input string, payload map[string]interface{}, options []string, erro
 		count_rows, err_count := coll.CountDocuments(context.TODO(), bson.M{options[2]: payload[input]})
 
 		if err_count != nil {
-			errors = addError(input, "exists", errors, "The value does not exists")
+			errors = addError(input, "exists", errors, "El valor no existe")
 		}
 
 		if count_rows == 0 {
-			errors = addError(input, "exists", errors, "The value does not exists")
+			errors = addError(input, "exists", errors, "El valor no existe")
 		}
 	}
 

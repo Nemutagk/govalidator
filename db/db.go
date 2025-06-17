@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 
 	"github.com/Nemutagk/govalidator/definitions/db"
 	"github.com/Nemutagk/govalidator/helper"
@@ -39,14 +40,14 @@ func InitConnections(connections map[string]db.DbConnection) *ConnectionManager 
 	for name, connection := range connections {
 		switch connection.Driver {
 		case "mongo", "mongodb":
-			fmt.Println("Connecting to MongoDB:", name)
+			log.Println("Connecting to MongoDB:", name)
 			helper.PrettyPrint(connection)
 			conn, err := mongoConnection(connection)
 			if err != nil {
 				panic(fmt.Errorf("failed to connect to MongoDB: %w", err))
 			}
 
-			fmt.Println("MongoDB connection established:", name)
+			log.Println("MongoDB connection established:", name)
 			connectionManager.AddConnection(name, conn)
 		default:
 			panic(fmt.Errorf("unsupported connection type: %s", connection.Driver))
@@ -63,12 +64,12 @@ func mongoConnection(connConfig db.DbConnection) (*mongo.Client, error) {
 	}
 
 	if connConfig.AnotherConfig == nil {
-		fmt.Println("anotherConfig not found, setting default value")
+		log.Println("anotherConfig not found, setting default value")
 		connConfig.AnotherConfig = &map[string]interface{}{
 			"authSource": "admin",
 		}
 	} else if _, ok := (*connConfig.AnotherConfig)["db_auth"]; !ok {
-		fmt.Println("db_auth not found in anotherConfig, setting default value")
+		log.Println("db_auth not found in anotherConfig, setting default value")
 		(*connConfig.AnotherConfig)["authSource"] = "admin"
 	}
 
@@ -82,12 +83,12 @@ func mongoConnection(connConfig db.DbConnection) (*mongo.Client, error) {
 		mongoUri = mongoUri[:len(mongoUri)-1] // Remove the trailing '&'
 	}
 
-	fmt.Println("MongoDB URI:", mongoUri)
+	log.Println("MongoDB URI:", mongoUri)
 	options := options.Client().ApplyURI(mongoUri)
 	connection, err := mongo.Connect(context.TODO(), options)
 
 	if err != nil {
-		fmt.Println("Error connecting to MongoDB:", err)
+		log.Println("Error connecting to MongoDB:", err)
 		return nil, err
 	}
 
