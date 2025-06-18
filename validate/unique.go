@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 
 	"github.com/Nemutagk/godb"
 	"go.mongodb.org/mongo-driver/bson"
@@ -53,17 +54,13 @@ func Unique(input string, payload map[string]interface{}, options []string, list
 			id := options[3]
 			err = raw_conn.(*mongo.Database).Collection(table).FindOne(context.TODO(), bson.M{column: email, "_id": bson.M{"$ne": id}}).Decode(&row)
 		}
-	}
-	// fmt.Println("db err: ", err)
-	// fmt.Println("row: ", row)
 
-	// for the validations
-	// if ok == mysql
-	// if !ok == mongodb
-	if (ok && err == nil) || (!ok && err == nil && row != nil) {
-		list_errors = addError(input, "unique", list_errors, "the value has been taken in the table")
-	} else if err != nil && ((ok && !errors.Is(err, gorm.ErrRecordNotFound)) || (!ok && err != mongo.ErrNoDocuments)) {
-		list_errors = addError(input, "unique", list_errors, "error to connect with db")
+		if err != nil {
+			log.Println("error in unique validation:", err)
+			if !errors.Is(err, mongo.ErrNoDocuments) && !errors.Is(err, mongo.ErrNilDocument) {
+				list_errors = addError(input, "unique", list_errors, "Error al validar el valor")
+			}
+		}
 	}
 
 	return list_errors
