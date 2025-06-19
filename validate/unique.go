@@ -48,11 +48,14 @@ func Unique(input string, payload map[string]interface{}, options []string, list
 	} else {
 		table := options[1]
 		column := options[2]
+		var num_rows int64
 		if len(options) == 3 {
-			err = raw_conn.(*mongo.Database).Collection(table).FindOne(context.TODO(), bson.M{column: email}).Decode(&row)
+			// err = raw_conn.(*mongo.Database).Collection(table).FindOne(context.TODO(), bson.M{column: email}).Decode(&row)
+			num_rows, err = raw_conn.(*mongo.Database).Collection(table).CountDocuments(context.TODO(), bson.M{column: email})
 		} else if len(options) == 4 {
 			id := options[3]
-			err = raw_conn.(*mongo.Database).Collection(table).FindOne(context.TODO(), bson.M{column: email, "_id": bson.M{"$ne": id}}).Decode(&row)
+			// err = raw_conn.(*mongo.Database).Collection(table).FindOne(context.TODO(), bson.M{column: email, "_id": bson.M{"$ne": id}}).Decode(&row)
+			num_rows, err = raw_conn.(*mongo.Database).Collection(table).CountDocuments(context.TODO(), bson.M{column: email, "_id": bson.M{"$ne": id}})
 		}
 
 		if err != nil {
@@ -60,6 +63,10 @@ func Unique(input string, payload map[string]interface{}, options []string, list
 			if !errors.Is(err, mongo.ErrNoDocuments) && !errors.Is(err, mongo.ErrNilDocument) {
 				list_errors = addError(input, "unique", list_errors, "Error al validar el valor")
 			}
+		}
+
+		if num_rows > 0 {
+			list_errors = addError(input, "unique", list_errors, "The value "+email.(string)+" already exists in the database")
 		}
 	}
 
