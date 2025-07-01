@@ -15,13 +15,13 @@ func Ip(input string, payload map[string]interface{}, options []string, errors m
 	ip := value.(string)
 	if !strings.Contains(ip, ",") {
 		if net.ParseIP(strings.TrimSpace(ip)) == nil {
-			errors = addError(input, "ip", errors, "The input "+input+" is not a valid IP address 1")
+			errors = addError(input, "ip", errors, "La dirección IP "+ip+" no es una dirección IP válida")
 		}
 	} else {
 		ipList := strings.Split(ip, ",")
 		for _, ip := range ipList {
 			if net.ParseIP(strings.TrimSpace(ip)) == nil {
-				errors = addError(input, "ip", errors, "The ip "+ip+" is not a valid IP address 2")
+				errors = addError(input, "ip", errors, "La dirección IP "+ip+" no es válida")
 			}
 		}
 	}

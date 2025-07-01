@@ -11,7 +11,7 @@ func Array(input string, payload map[string]interface{}, options []string, error
 	v := reflect.ValueOf(value)
 
 	if v.Kind() != reflect.Slice && v.Kind() != reflect.Array {
-		addError(input, "before", errors, "The value is not a valid array.")
+		addError(input, "before", errors, "El valor no es un array.")
 		return errors
 	}
 

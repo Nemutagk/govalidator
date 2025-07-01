@@ -13,14 +13,14 @@ func Type(input string, payload map[string]interface{}, options []string, errors
 	}
 
 	if len(options) == 0 {
-		errors = addError(input, "type", errors, "The type is not defined")
+		errors = addError(input, "type", errors, "El tipo no está definido")
 		return errors
 	}
 
 	var_type := reflect.TypeOf(value).String()
 	fmt.Println("var_type: ", var_type)
 	if var_type != options[0] {
-		errors = addError(input, "type", errors, "The type of the input "+input+" is not "+options[0])
+		errors = addError(input, "type", errors, "El tipo del campo "+input+" no es "+options[0])
 		return errors
 	}
 

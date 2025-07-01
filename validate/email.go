@@ -7,7 +7,7 @@ func Email(input string, payload map[string]interface{}, options []string, error
 
 	value, ok := payload[input].(string)
 	if ok && !emailRegex.MatchString(value) {
-		errors = addError(input, "email", errors, "The input is not email valid")
+		errors = addError(input, "email", errors, "El campo no es un correo electrónico válido")
 	}
 
 	return errors

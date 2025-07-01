@@ -9,16 +9,16 @@ func Confirmation(input string, payload map[string]interface{}, options []string
 	}
 
 	if payload[input] == "" {
-		errors = addError(input, "confirmation", errors, "The input "+input+" is empty")
+		errors = addError(input, "confirmation", errors, "La confirmación está vacía")
 		return errors
 	}
 
 	if val, exists_confirmation := payload["password_confirmation"]; !exists_confirmation && (val == nil || val == "" || val == false) {
-		errors = addError("password_confirmation", "confirmation", errors, "The input password_confirmation is not defined")
+		errors = addError("password_confirmation", "confirmation", errors, "El input password_confirmation no está definido")
 	}
 
 	if payload[input] != payload["password_confirmation"] {
-		errors = addError(input, "confirmation", errors, "The password is not same for confirmation")
+		errors = addError(input, "confirmation", errors, "La contraseña no es igual a la confirmación")
 	}
 
 	return errors

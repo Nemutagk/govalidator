@@ -9,7 +9,7 @@ func Boolean(input string, payload map[string]interface{}, options []string, err
 
 	_, err := strconv.ParseBool(payload[input].(string))
 	if err != nil {
-		errors = addError(input, "boolean", errors, "The input "+input+" is not a valid boolean: "+err.Error())
+		errors = addError(input, "boolean", errors, "El input "+input+" no es un booleano válido: "+err.Error())
 	}
 
 	return errors

@@ -11,7 +11,7 @@ import (
 
 func Exists(input string, payload map[string]interface{}, options []string, errors map[string]interface{}, addError func(string, string, map[string]interface{}, string) map[string]interface{}, dbManager *godb.ConnectionManager) map[string]interface{} {
 	if len(options) != 3 {
-		errors = addError(input, "exists", errors, "the connections configuration is not correct")
+		errors = addError(input, "exists", errors, "la configuración de conexión no es válida")
 		return errors
 	}
 
@@ -24,7 +24,7 @@ func Exists(input string, payload map[string]interface{}, options []string, erro
 
 		if err != nil {
 			if err == gorm.ErrRecordNotFound {
-				errors = addError(input, "exists", errors, "The value does not exist") // corrected "does not exists" to "does not exist"
+				errors = addError(input, "exists", errors, "El valor no existe")
 			}
 		}
 	} else if dbConn, ok := raw_connection.(*mongo.Database); ok {
@@ -33,11 +33,11 @@ func Exists(input string, payload map[string]interface{}, options []string, erro
 		count_rows, err_count := coll.CountDocuments(context.TODO(), bson.M{options[2]: payload[input]})
 
 		if err_count != nil {
-			errors = addError(input, "exists", errors, "The value does not exists")
+			errors = addError(input, "exists", errors, "El valor no existe")
 		}
 
 		if count_rows == 0 {
-			errors = addError(input, "exists", errors, "The value does not exists")
+			errors = addError(input, "exists", errors, "El valor no existe")
 		}
 	}
 

@@ -7,7 +7,7 @@ import (
 
 func After(input string, payload map[string]interface{}, options []string, errors map[string]interface{}, addError func(string, string, map[string]interface{}, string) map[string]interface{}) map[string]interface{} {
 	if len(options) == 0 {
-		errors = addError(input, "before", errors, "The compare value is not defined")
+		errors = addError(input, "before", errors, "El valor a comprar no esta definido")
 		return errors
 	}
 
@@ -22,26 +22,26 @@ func After(input string, payload map[string]interface{}, options []string, error
 	if err_date == nil {
 		if options[0] == "now" || options[0] == "current" || options[0] == "today" {
 			if date.Before(time.Now()) {
-				errors = addError(input, "after", errors, "The date is not after the current date")
+				errors = addError(input, "after", errors, "La fecha no es posterior a la fecha actual")
 			}
 		}
 
 		if options[0] == "tomorrow" {
 			if date.Before(time.Now().AddDate(0, 0, 1)) {
-				errors = addError(input, "after", errors, "The date is not after tomorrow")
+				errors = addError(input, "after", errors, "La fecha no es posterior a mañana")
 			}
 		}
 
 		if options[0] == "yesterday" {
 			if date.Before(time.Now().AddDate(0, 0, -1)) {
-				errors = addError(input, "after", errors, "The date is not after yesterday")
+				errors = addError(input, "after", errors, "La fecha no es posterior a ayer")
 			}
 		}
 
 		compare_date, err := time.Parse("2006-01-02", options[0])
 		if err == nil {
 			if date.Before(compare_date) {
-				errors = addError(input, "after", errors, "The date is not after the date "+options[0])
+				errors = addError(input, "after", errors, "La fecha no es posterior a la fecha "+options[0])
 			}
 		}
 	}
@@ -49,11 +49,11 @@ func After(input string, payload map[string]interface{}, options []string, error
 	num, ok := value.(int)
 	if ok {
 		if len(options) == 0 {
-			errors = addError(input, "after", errors, "The compare value is not defined")
+			errors = addError(input, "after", errors, "El valor a comparar no está definido")
 		} else {
 			compare_int, _ := strconv.Atoi(options[0])
 			if num < compare_int {
-				errors = addError(input, "after", errors, "The input "+input+" is not after the number "+options[0])
+				errors = addError(input, "after", errors, "La entrada "+input+" no es posterior al número "+options[0])
 			}
 		}
 	}
