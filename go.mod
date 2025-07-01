@@ -3,13 +3,13 @@ module github.com/Nemutagk/govalidator
 go 1.23.8
 
 require (
+	github.com/Nemutagk/godb v1.3.0
 	github.com/gofrs/uuid v4.4.0+incompatible
 	go.mongodb.org/mongo-driver v1.17.3
 	gorm.io/gorm v1.26.1
 )
 
 require (
-	github.com/Nemutagk/godb v1.3.0 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
