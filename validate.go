@@ -2,22 +2,49 @@ package govalidator
 
 import (
 	"encoding/json"
-	"fmt"
-	"net/http"
+	"log"
 	"strings"
 
 	"github.com/Nemutagk/godb"
 	"github.com/Nemutagk/govalidator/validate"
 )
 
-func ValidateRequestPrepare(r http.Request) (map[string]interface{}, error) {
-	var payload map[string]interface{}
-
-	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-		return nil, fmt.Errorf("error to decode payload: %v", err)
+func ValidateRequestT[T any](body T, rules map[string]string, dbManager *godb.ConnectionManager) (*T, map[string]interface{}) {
+	bodyJson, err := json.Marshal(body)
+	if err != nil {
+		return nil, map[string]interface{}{
+			"error": "Error al codificar el payload: " + err.Error(),
+		}
+	}
+	var bodyMap map[string]interface{}
+	err = json.Unmarshal(bodyJson, &bodyMap)
+	if err != nil {
+		return nil, map[string]interface{}{
+			"error": "Error al decodificar el payload: " + err.Error(),
+		}
 	}
 
-	return payload, nil
+	safeResult, errMap := ValidateRequest(bodyMap, rules, dbManager)
+	if len(errMap) > 0 {
+		return nil, errMap
+	}
+
+	bodyBytes, err := json.Marshal(safeResult)
+	if err != nil {
+		return nil, map[string]interface{}{
+			"error": "El payload válido no se pudo codificar al tipo esperado: " + err.Error(),
+		}
+	}
+
+	var payload T
+	err = json.Unmarshal(bodyBytes, &payload)
+	if err != nil {
+		return nil, map[string]interface{}{
+			"error": "El payload válido no se pudo convertir al tipo esperado: " + err.Error(),
+		}
+	}
+
+	return &payload, nil
 }
 
 func ValidateRequest(body map[string]interface{}, rules map[string]string, dbManager *godb.ConnectionManager) (map[string]interface{}, map[string]interface{}) {
@@ -54,19 +81,22 @@ func ValidateRequest(body map[string]interface{}, rules map[string]string, dbMan
 
 	errors := make(map[string]interface{})
 	safePayload := make(map[string]interface{})
+
 	for input, rules := range rules_intpus {
 		rulesMap, ok := rules.(map[string]interface{})
 		if !ok {
 			continue
 		}
+
+		skipRulesMap := false
+
 		for rule, options := range rulesMap {
 			opts, ok := options.([]string)
 			if !ok {
 				continue
 			}
+
 			switch rule {
-			case "required":
-				errors = validate.Required(input, body_parse, opts, errors, addError)
 			case "email":
 				errors = validate.Email(input, body_parse, opts, errors, addError)
 			case "confirmation":
@@ -92,7 +122,13 @@ func ValidateRequest(body map[string]interface{}, rules map[string]string, dbMan
 			case "boolean":
 				errors = validate.Boolean(input, body_parse, opts, errors, addError)
 			case "sometimes":
-				fmt.Println("Sometimes rule is not implemented yet")
+				if _, exists_input := body_parse[input]; !exists_input {
+					//Si no existe el input no se validan lás demás reglas existentes
+					log.Println("Input", input, "no existe en el body, no se validan las demás reglas")
+					skipRulesMap = true
+				}
+			case "required":
+				errors = validate.Required(input, body_parse, opts, errors, addError)
 			case "required_with":
 				errors = validate.RequiredWith(input, body_parse, opts, errors, addError)
 			case "required_with_all":
@@ -108,6 +144,10 @@ func ValidateRequest(body map[string]interface{}, rules map[string]string, dbMan
 
 			default:
 				errors = addError(input, input, errors, "The rule "+rule+" is not valid")
+			}
+
+			if skipRulesMap {
+				break
 			}
 		}
 
