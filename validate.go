@@ -2,61 +2,62 @@ package govalidator
 
 import (
 	"encoding/json"
-	"log"
 	"strings"
 
 	"github.com/Nemutagk/godb"
+	"github.com/Nemutagk/goerrors"
 	"github.com/Nemutagk/govalidator/validate"
 )
 
-func ValidateRequestT[T any](body T, rules map[string]string, dbManager *godb.ConnectionManager) (*T, map[string]interface{}) {
+func ValidateRequestT[T any](body T, rules map[string]string, dbManager *godb.ConnectionManager) (*T, *goerrors.GError) {
 	bodyJson, err := json.Marshal(body)
 	if err != nil {
-		return nil, map[string]interface{}{
-			"error": "Error al codificar el payload: " + err.Error(),
-		}
+		return nil, goerrors.NewGError("Error en la validación", goerrors.StatusBadRequest, &[]string{
+			"Error al codificar el payload: " + err.Error(),
+		}, nil)
 	}
 	var bodyMap map[string]interface{}
 	err = json.Unmarshal(bodyJson, &bodyMap)
 	if err != nil {
-		return nil, map[string]interface{}{
-			"error": "Error al decodificar el payload: " + err.Error(),
-		}
+		return nil, goerrors.NewGError("Error en la validación", goerrors.StatusBadRequest, &[]string{
+			"Error al decodificar el payload: " + err.Error(),
+		}, nil)
 	}
 
 	safeResult, errMap := ValidateRequest(bodyMap, rules, dbManager)
-	if len(errMap) > 0 {
+	if errMap != nil {
 		return nil, errMap
 	}
 
 	bodyBytes, err := json.Marshal(safeResult)
 	if err != nil {
-		return nil, map[string]interface{}{
-			"error": "El payload válido no se pudo codificar al tipo esperado: " + err.Error(),
-		}
+		return nil, goerrors.NewGError("Error en la validación", goerrors.StatusBadRequest, &[]string{
+			"Error al codificar el payload: " + err.Error(),
+		}, nil)
 	}
 
 	var payload T
 	err = json.Unmarshal(bodyBytes, &payload)
 	if err != nil {
-		return nil, map[string]interface{}{
-			"error": "El payload válido no se pudo convertir al tipo esperado: " + err.Error(),
-		}
+		return nil, goerrors.NewGError("Error en la validación", goerrors.StatusBadRequest, &[]string{
+			"El payload válido no se pudo convertir al tipo esperado: " + err.Error(),
+		}, nil)
 	}
 
 	return &payload, nil
 }
 
-func ValidateRequest(body map[string]interface{}, rules map[string]string, dbManager *godb.ConnectionManager) (map[string]interface{}, map[string]interface{}) {
+func ValidateRequest(body map[string]interface{}, rules map[string]string, dbManager *godb.ConnectionManager) (map[string]interface{}, *goerrors.GError) {
 
-	rules_intpus := make(map[string]interface{})
+	rules_inputs := make(map[string]interface{})
 
 	body_encode, err := json.Marshal(body)
 
 	if err != nil {
-		return nil, map[string]interface{}{
-			"error": "The payload in invalid!",
-		}
+		convertError := goerrors.ConvertError(err)
+		return nil, goerrors.NewGError("Error en la validación", goerrors.StatusBadRequest, &[]string{
+			"The payload is invalid",
+		}, convertError)
 	}
 
 	var body_parse map[string]interface{}
@@ -64,9 +65,10 @@ func ValidateRequest(body map[string]interface{}, rules map[string]string, dbMan
 	err = json.Unmarshal(body_encode, &body_parse)
 
 	if err != nil {
-		return nil, map[string]interface{}{
-			"error": "The payload in invalid!",
-		}
+		convertError := goerrors.ConvertError(err)
+		return nil, goerrors.NewGError("Error en la validación", goerrors.StatusBadRequest, &[]string{
+			"The payload is invalid",
+		}, convertError)
 	}
 
 	for input, rules := range rules {
@@ -76,13 +78,13 @@ func ValidateRequest(body map[string]interface{}, rules map[string]string, dbMan
 			tmp_rule := getRuleWithOptions(rule)
 			rules_building[tmp_rule[0]] = tmp_rule[1:]
 		}
-		rules_intpus[input] = rules_building
+		rules_inputs[input] = rules_building
 	}
 
 	errors := make(map[string]interface{})
 	safePayload := make(map[string]interface{})
 
-	for input, rules := range rules_intpus {
+	for input, rules := range rules_inputs {
 		rulesMap, ok := rules.(map[string]interface{})
 		if !ok {
 			continue
@@ -124,7 +126,7 @@ func ValidateRequest(body map[string]interface{}, rules map[string]string, dbMan
 			case "sometimes":
 				if _, exists_input := body_parse[input]; !exists_input {
 					//Si no existe el input no se validan lás demás reglas existentes
-					log.Println("Input", input, "no existe en el body, no se validan las demás reglas")
+					// log.Println("Input", input, "no existe en el body, no se validan las demás reglas")
 					skipRulesMap = true
 				}
 			case "required":
@@ -156,7 +158,21 @@ func ValidateRequest(body map[string]interface{}, rules map[string]string, dbMan
 		}
 	}
 
-	return safePayload, errors
+	allErrors := make([]string, 0)
+	if len(errors) > 0 {
+		for input, inputErrors := range errors {
+			for _, errMessages := range inputErrors.(map[string]interface{}) {
+				for _, errMessage := range errMessages.([]string) {
+					allErrors = append(allErrors, input+": "+errMessage)
+				}
+			}
+		}
+		gerr := goerrors.NewGError("Error en la validación", goerrors.StatusBadRequest, &allErrors, nil)
+
+		return nil, gerr
+	}
+
+	return safePayload, nil
 }
 
 func getRuleWithOptions(rule string) []string {

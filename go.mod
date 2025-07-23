@@ -1,9 +1,12 @@
 module github.com/Nemutagk/govalidator
 
-go 1.23.8
+go 1.24.3
+
+toolchain go1.24.5
 
 require (
 	github.com/Nemutagk/godb v1.3.0
+	github.com/Nemutagk/goerrors v1.2.0
 	github.com/gofrs/uuid v4.4.0+incompatible
 	go.mongodb.org/mongo-driver v1.17.3
 	gorm.io/gorm v1.26.1
@@ -23,3 +26,5 @@ require (
 	golang.org/x/sync v0.9.0 // indirect
 	golang.org/x/text v0.20.0 // indirect
 )
+
+// replace github.com/Nemutagk/goerrors => /opt/modules/goerrors
