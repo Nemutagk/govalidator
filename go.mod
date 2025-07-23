@@ -6,7 +6,7 @@ toolchain go1.24.5
 
 require (
 	github.com/Nemutagk/godb v1.3.0
-	github.com/Nemutagk/goerrors v1.2.0
+	github.com/Nemutagk/goerrors v1.2.2
 	github.com/gofrs/uuid v4.4.0+incompatible
 	go.mongodb.org/mongo-driver v1.17.3
 	gorm.io/gorm v1.26.1

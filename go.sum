@@ -4,6 +4,8 @@ github.com/Nemutagk/goerrors v1.0.1 h1:S3OjAhS6Ft1TVbqMWloPU+1Nwe+zQTOPgisOmVN3Y
 github.com/Nemutagk/goerrors v1.0.1/go.mod h1:Q+SeEcw23yEFsstLkOBAt7Q4KrL+O4FBK91FgYy5k2g=
 github.com/Nemutagk/goerrors v1.2.0 h1:Lv6qRYop5td4j0J0x8amb4bHPQTIJOwkbFDLsa/gt5I=
 github.com/Nemutagk/goerrors v1.2.0/go.mod h1:Q+SeEcw23yEFsstLkOBAt7Q4KrL+O4FBK91FgYy5k2g=
+github.com/Nemutagk/goerrors v1.2.2 h1:4S8uEJw06IcQCFJlAQMoCaTgeri1/3Z/o2haCiZqqZU=
+github.com/Nemutagk/goerrors v1.2.2/go.mod h1:Q+SeEcw23yEFsstLkOBAt7Q4KrL+O4FBK91FgYy5k2g=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/gofrs/uuid v4.4.0+incompatible h1:3qXRTX8/NbyulANqlc0lchS1gqAVxRgsuW1YrTJupqA=
