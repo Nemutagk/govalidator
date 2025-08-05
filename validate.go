@@ -5,11 +5,12 @@ import (
 	"strings"
 
 	"github.com/Nemutagk/godb"
+	"github.com/Nemutagk/godb/definitions/db"
 	"github.com/Nemutagk/goerrors"
 	"github.com/Nemutagk/govalidator/validate"
 )
 
-func ValidateRequestT[T any](body T, rules map[string]string, dbManager *godb.ConnectionManager) (*T, *goerrors.GError) {
+func ValidateRequestT[T any](body T, rules map[string]string) (*T, *goerrors.GError) {
 	bodyJson, err := json.Marshal(body)
 	if err != nil {
 		return nil, goerrors.NewGError("Error en la validación", goerrors.StatusBadRequest, &[]string{
@@ -24,30 +25,16 @@ func ValidateRequestT[T any](body T, rules map[string]string, dbManager *godb.Co
 		}, nil)
 	}
 
-	safeResult, errMap := ValidateRequest(bodyMap, rules, dbManager)
+	var safeResult T
+	errMap := ValidateRequest(bodyMap, rules, &safeResult)
 	if errMap != nil {
 		return nil, errMap
 	}
 
-	bodyBytes, err := json.Marshal(safeResult)
-	if err != nil {
-		return nil, goerrors.NewGError("Error en la validación", goerrors.StatusBadRequest, &[]string{
-			"Error al codificar el payload: " + err.Error(),
-		}, nil)
-	}
-
-	var payload T
-	err = json.Unmarshal(bodyBytes, &payload)
-	if err != nil {
-		return nil, goerrors.NewGError("Error en la validación", goerrors.StatusBadRequest, &[]string{
-			"El payload válido no se pudo convertir al tipo esperado: " + err.Error(),
-		}, nil)
-	}
-
-	return &payload, nil
+	return &safeResult, nil
 }
 
-func ValidateRequest(body map[string]interface{}, rules map[string]string, dbManager *godb.ConnectionManager) (map[string]interface{}, *goerrors.GError) {
+func ValidateRequest(body map[string]interface{}, rules map[string]string, result any) *goerrors.GError {
 
 	rules_inputs := make(map[string]interface{})
 
@@ -55,7 +42,7 @@ func ValidateRequest(body map[string]interface{}, rules map[string]string, dbMan
 
 	if err != nil {
 		convertError := goerrors.ConvertError(err)
-		return nil, goerrors.NewGError("Error en la validación", goerrors.StatusBadRequest, &[]string{
+		return goerrors.NewGError("Error en la validación", goerrors.StatusBadRequest, &[]string{
 			"The payload is invalid",
 		}, convertError)
 	}
@@ -66,7 +53,7 @@ func ValidateRequest(body map[string]interface{}, rules map[string]string, dbMan
 
 	if err != nil {
 		convertError := goerrors.ConvertError(err)
-		return nil, goerrors.NewGError("Error en la validación", goerrors.StatusBadRequest, &[]string{
+		return goerrors.NewGError("Error en la validación", goerrors.StatusBadRequest, &[]string{
 			"The payload is invalid",
 		}, convertError)
 	}
@@ -83,6 +70,8 @@ func ValidateRequest(body map[string]interface{}, rules map[string]string, dbMan
 
 	errors := make(map[string]interface{})
 	safePayload := make(map[string]interface{})
+
+	dbManager := godb.InitConnections(map[string]db.DbConnection{})
 
 	for input, rules := range rules_inputs {
 		rulesMap, ok := rules.(map[string]interface{})
@@ -169,10 +158,26 @@ func ValidateRequest(body map[string]interface{}, rules map[string]string, dbMan
 		}
 		gerr := goerrors.NewGError("Error en la validación", goerrors.StatusBadRequest, &allErrors, nil)
 
-		return nil, gerr
+		return gerr
 	}
 
-	return safePayload, nil
+	jBytes, err := json.Marshal(safePayload)
+	if err != nil {
+		convertError := goerrors.ConvertError(err)
+		return goerrors.NewGError("Error en la validación", goerrors.StatusBadRequest, &[]string{
+			"Error al codificar el payload: " + err.Error(),
+		}, convertError)
+	}
+
+	err = json.Unmarshal(jBytes, result)
+	if err != nil {
+		convertError := goerrors.ConvertError(err)
+		return goerrors.NewGError("Error en la validación", goerrors.StatusBadRequest, &[]string{
+			"El payload válido no se pudo convertir al tipo esperado: " + err.Error(),
+		}, convertError)
+	}
+
+	return nil
 }
 
 func getRuleWithOptions(rule string) []string {
