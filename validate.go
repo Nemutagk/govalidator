@@ -161,20 +161,22 @@ func ValidateRequest(body map[string]interface{}, rules map[string]string, resul
 		return gerr
 	}
 
-	jBytes, err := json.Marshal(safePayload)
-	if err != nil {
-		convertError := goerrors.ConvertError(err)
-		return goerrors.NewGError("Error en la validación", goerrors.StatusBadRequest, &[]string{
-			"Error al codificar el payload: " + err.Error(),
-		}, convertError)
-	}
+	if result != nil {
+		jBytes, err := json.Marshal(safePayload)
+		if err != nil {
+			convertError := goerrors.ConvertError(err)
+			return goerrors.NewGError("Error en la validación", goerrors.StatusBadRequest, &[]string{
+				"Error al codificar el payload: " + err.Error(),
+			}, convertError)
+		}
 
-	err = json.Unmarshal(jBytes, result)
-	if err != nil {
-		convertError := goerrors.ConvertError(err)
-		return goerrors.NewGError("Error en la validación", goerrors.StatusBadRequest, &[]string{
-			"El payload válido no se pudo convertir al tipo esperado: " + err.Error(),
-		}, convertError)
+		err = json.Unmarshal(jBytes, result)
+		if err != nil {
+			convertError := goerrors.ConvertError(err)
+			return goerrors.NewGError("Error en la validación", goerrors.StatusBadRequest, &[]string{
+				"El payload válido no se pudo convertir al tipo esperado: " + err.Error(),
+			}, convertError)
+		}
 	}
 
 	return nil
