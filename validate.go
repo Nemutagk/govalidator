@@ -132,6 +132,8 @@ func ValidateRequest(body map[string]interface{}, rules map[string]string, resul
 				errors = validate.Array(input, body_parse, opts, errors, addError)
 			case "type":
 				errors = validate.Type(input, body_parse, opts, errors, addError)
+			case "date":
+				errors = validate.Date(input, body_parse, opts, errors, addError)
 
 			default:
 				errors = addError(input, input, errors, "The rule "+rule+" is not valid")
