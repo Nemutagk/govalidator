@@ -1,6 +1,9 @@
 package validate
 
-import "strconv"
+import (
+	"reflect"
+	"strconv"
+)
 
 func Max(input string, payload map[string]interface{}, options []string, errors map[string]interface{}, addError func(string, string, map[string]interface{}, string) map[string]interface{}) map[string]interface{} {
 	value := payload[input]
@@ -30,6 +33,14 @@ func Max(input string, payload map[string]interface{}, options []string, errors 
 		floatValue := value.(float64)
 		if floatValue > float64(max) {
 			errors = addError(input, "max", errors, "El campo "+input+" debe ser como máximo "+options[0]+"")
+		}
+	}
+
+	val := reflect.ValueOf(value)
+	kind := val.Kind()
+	if kind == reflect.Slice || kind == reflect.Array {
+		if val.Len() > int(max) {
+			errors = addError(input, "max", errors, "El campo "+input+" debe tener como máximo "+options[0]+" elementos")
 		}
 	}
 

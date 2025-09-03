@@ -1,6 +1,9 @@
 package validate
 
-import "strconv"
+import (
+	"reflect"
+	"strconv"
+)
 
 func Min(input string, payload map[string]interface{}, options []string, errors map[string]interface{}, addError func(string, string, map[string]interface{}, string) map[string]interface{}) map[string]interface{} {
 	value := payload[input]
@@ -30,6 +33,14 @@ func Min(input string, payload map[string]interface{}, options []string, errors 
 		floatValue := value.(float64)
 		if floatValue < float64(min) {
 			errors = addError(input, "min", errors, "El campo "+input+" debe ser al menos "+options[0]+"")
+		}
+	}
+
+	val := reflect.ValueOf(value)
+	kind := val.Kind()
+	if kind == reflect.Slice || kind == reflect.Array {
+		if val.Len() < int(min) {
+			errors = addError(input, "min", errors, "El campo "+input+" debe tener al menos "+options[0]+" elementos")
 		}
 	}
 
