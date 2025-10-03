@@ -9,6 +9,6 @@ require (
 
 require github.com/Nemutagk/godb/v2 v2.0.0 // indirect
 
-replace github.com/Nemutagk/godb/v2 => /opt/modules/db
+// replace github.com/Nemutagk/godb/v2 => /opt/modules/db
 
 // replace github.com/Nemutagk/goerrors => /opt/modules/goerrors
