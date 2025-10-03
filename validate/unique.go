@@ -1,15 +1,7 @@
 package validate
 
 import (
-	"context"
-	"errors"
 	"fmt"
-	"log"
-
-	"github.com/Nemutagk/godb"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
-	"gorm.io/gorm"
 )
 
 /**
@@ -17,9 +9,10 @@ import (
 * Params: db connection, table name, column name
 * Example: unique:princial,users,email
  */
-func Unique(input string, payload map[string]interface{}, options []string, list_errors map[string]interface{}, addError func(string, string, map[string]interface{}, string) map[string]interface{}, dbConn *godb.ConnectionManager) map[string]interface{} {
-	if len(options) < 3 || len(options) > 4 {
-		panic("the options for connection is invalid")
+func Unique(input string, payload map[string]interface{}, options []string, list_errors map[string]interface{}, addError func(string, string, map[string]interface{}, string) map[string]interface{}, listModels map[string]func(data string) bool) map[string]interface{} {
+	if len(options) != 1 {
+		list_errors = addError(input, "unique", list_errors, "the options is not valid")
+		return list_errors
 	}
 
 	if _, exists_input := payload[input]; !exists_input {
@@ -27,47 +20,27 @@ func Unique(input string, payload map[string]interface{}, options []string, list
 		return list_errors
 	}
 
-	email := payload[input]
-	var row map[string]interface{}
+	if listModels == nil {
+		list_errors = addError(input, "unique", list_errors, "the model is not defined")
+		return list_errors
+	}
 
-	conn, _ := dbConn.GetConnection(options[0])
-	raw_conn := conn.GetRawConnection()
+	model, ok := listModels[options[0]]
+	if !ok || model == nil {
+		list_errors = addError(input, "unique", list_errors, "the model is not defined")
+		return list_errors
+	}
 
-	var err error
-	_, ok := raw_conn.(*gorm.DB)
+	value, ok := payload[input].(string)
+	if !ok {
+		list_errors = addError(input, "unique", list_errors, "el valor no es válido")
+		return list_errors
+	}
 
-	if ok {
-		table := options[1]
-		column := options[2]
-		if len(options) == 3 {
-			err = raw_conn.(*gorm.DB).Table(table).Select(column).Where(column+" = ?", email).Limit(1).Take(&row).Error
-		} else if len(options) == 4 {
-			id := options[3]
-			err = raw_conn.(*gorm.DB).Table(table).Select(column).Where(column+" = ? AND id != ?", email, id).Limit(1).Take(&row).Error
-		}
-	} else {
-		table := options[1]
-		column := options[2]
-		var num_rows int64
-		if len(options) == 3 {
-			// err = raw_conn.(*mongo.Database).Collection(table).FindOne(context.TODO(), bson.M{column: email}).Decode(&row)
-			num_rows, err = raw_conn.(*mongo.Database).Collection(table).CountDocuments(context.TODO(), bson.M{column: email})
-		} else if len(options) == 4 {
-			id := options[3]
-			// err = raw_conn.(*mongo.Database).Collection(table).FindOne(context.TODO(), bson.M{column: email, "_id": bson.M{"$ne": id}}).Decode(&row)
-			num_rows, err = raw_conn.(*mongo.Database).Collection(table).CountDocuments(context.TODO(), bson.M{column: email, "_id": bson.M{"$ne": id}})
-		}
+	result := model(value)
 
-		if err != nil {
-			log.Println("error in unique validation:", err)
-			if !errors.Is(err, mongo.ErrNoDocuments) && !errors.Is(err, mongo.ErrNilDocument) {
-				list_errors = addError(input, "unique", list_errors, "Error al validar el valor")
-			}
-		}
-
-		if num_rows > 0 {
-			list_errors = addError(input, "unique", list_errors, "The value "+email.(string)+" already exists in the database")
-		}
+	if !result {
+		list_errors = addError(input, "unique", list_errors, "El valor '"+value+"'ya está registrado")
 	}
 
 	return list_errors
