@@ -46,6 +46,8 @@ func ValidateRequest(body map[string]any, rules map[string]string, models map[st
 				errors = validate.Unique(input, body, opts, errors, addError, models)
 			case "in":
 				errors = validate.In(input, body, opts, errors, addError)
+			case "not_in":
+				errors = validate.NotIn(input, body, opts, errors, addError)
 			case "before":
 				errors = validate.Before(input, body, opts, errors, addError)
 			case "after":
