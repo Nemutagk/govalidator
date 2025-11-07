@@ -96,6 +96,8 @@ func ValidateRequest(body map[string]interface{}, rules map[string]string, resul
 				errors = validate.Unique(input, body_parse, opts, errors, addError, dbManager)
 			case "in":
 				errors = validate.In(input, body_parse, opts, errors, addError)
+			case "not_in":
+				errors = validate.NotIn(input, body_parse, opts, errors, addError)
 			case "before":
 				errors = validate.Before(input, body_parse, opts, errors, addError)
 			case "after":
