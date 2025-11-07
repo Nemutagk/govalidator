@@ -2,6 +2,7 @@ package govalidator
 
 import (
 	"encoding/json"
+	"fmt"
 	"strings"
 
 	"github.com/Nemutagk/godb"
@@ -9,6 +10,16 @@ import (
 	"github.com/Nemutagk/goerrors"
 	"github.com/Nemutagk/govalidator/validate"
 )
+
+type validInput struct {
+	Name  string
+	Rules []validRule
+}
+
+type validRule struct {
+	Rule string
+	Opts *[]string
+}
 
 func ValidateRequestT[T any](body T, rules map[string]string) (*T, *goerrors.GError) {
 	bodyJson, err := json.Marshal(body)
@@ -35,9 +46,6 @@ func ValidateRequestT[T any](body T, rules map[string]string) (*T, *goerrors.GEr
 }
 
 func ValidateRequest(body map[string]interface{}, rules map[string]string, result any) *goerrors.GError {
-
-	rules_inputs := make(map[string]interface{})
-
 	body_encode, err := json.Marshal(body)
 
 	if err != nil {
@@ -58,91 +66,99 @@ func ValidateRequest(body map[string]interface{}, rules map[string]string, resul
 		}, convertError)
 	}
 
-	for input, rules := range rules {
-		separated_rules := strings.Split(rules, "|")
-		rules_building := make(map[string]interface{})
+	all_rules := []validInput{}
+
+	for input, rule := range rules {
+		separated_rules := strings.Split(rule, "|")
+
+		struct_input := validInput{
+			Name:  input,
+			Rules: []validRule{},
+		}
+
 		for _, rule := range separated_rules {
 			tmp_rule := getRuleWithOptions(rule)
-			rules_building[tmp_rule[0]] = tmp_rule[1:]
+			opts := tmp_rule[1:]
+			struct_input.Rules = append(struct_input.Rules, validRule{
+				Rule: tmp_rule[0],
+				Opts: &opts,
+			})
 		}
-		rules_inputs[input] = rules_building
+		all_rules = append(all_rules, struct_input)
 	}
 
-	errors := make(map[string]interface{})
-	safePayload := make(map[string]interface{})
+	errors := make(map[string]any)
+	safePayload := make(map[string]any)
 
 	dbManager := godb.InitConnections(map[string]db.DbConnection{})
 
-	for input, rules := range rules_inputs {
-		rulesMap, ok := rules.(map[string]interface{})
-		if !ok {
-			continue
-		}
+	for _, input := range all_rules {
 
 		skipRulesMap := false
 
-		for rule, options := range rulesMap {
-			opts, ok := options.([]string)
-			if !ok {
-				continue
+		for _, rule := range input.Rules {
+			opts := []string{}
+
+			if rule.Opts != nil {
+				opts = *rule.Opts
 			}
 
-			switch rule {
+			switch rule.Rule {
 			case "email":
-				errors = validate.Email(input, body_parse, opts, errors, addError)
+				errors = validate.Email(input.Name, body_parse, opts, errors, addError)
 			case "confirmation":
-				errors = validate.Confirmation(input, body_parse, opts, errors, addError)
+				errors = validate.Confirmation(input.Name, body_parse, opts, errors, addError)
 			case "unique":
-				errors = validate.Unique(input, body_parse, opts, errors, addError, dbManager)
+				errors = validate.Unique(input.Name, body_parse, opts, errors, addError, dbManager)
 			case "in":
-				errors = validate.In(input, body_parse, opts, errors, addError)
+				errors = validate.In(input.Name, body_parse, opts, errors, addError)
 			case "before":
-				errors = validate.Before(input, body_parse, opts, errors, addError)
+				errors = validate.Before(input.Name, body_parse, opts, errors, addError)
 			case "after":
-				errors = validate.After(input, body_parse, opts, errors, addError)
+				errors = validate.After(input.Name, body_parse, opts, errors, addError)
 			case "ip":
-				errors = validate.Ip(input, body_parse, opts, errors, addError)
+				errors = validate.Ip(input.Name, body_parse, opts, errors, addError)
 			case "password":
-				errors = validate.Password(input, body_parse, opts, errors, addError)
+				errors = validate.Password(input.Name, body_parse, opts, errors, addError)
 			case "exists":
-				errors = validate.Exists(input, body_parse, opts, errors, addError, dbManager)
+				errors = validate.Exists(input.Name, body_parse, opts, errors, addError, dbManager)
 			case "min":
-				errors = validate.Min(input, body_parse, opts, errors, addError)
+				errors = validate.Min(input.Name, body_parse, opts, errors, addError)
 			case "max":
-				errors = validate.Max(input, body_parse, opts, errors, addError)
+				errors = validate.Max(input.Name, body_parse, opts, errors, addError)
 			case "boolean":
-				errors = validate.Boolean(input, body_parse, opts, errors, addError)
+				errors = validate.Boolean(input.Name, body_parse, opts, errors, addError)
 			case "sometimes":
-				if _, exists_input := body_parse[input]; !exists_input {
+				if _, exists_input := body_parse[input.Name]; !exists_input {
 					//Si no existe el input no se validan lás demás reglas existentes
 					// log.Println("Input", input, "no existe en el body, no se validan las demás reglas")
 					skipRulesMap = true
 				}
 			case "required":
-				errors = validate.Required(input, body_parse, opts, errors, addError)
+				errors = validate.Required(input.Name, body_parse, opts, errors, addError)
 			case "required_with":
-				errors = validate.RequiredWith(input, body_parse, opts, errors, addError)
+				errors = validate.RequiredWith(input.Name, body_parse, opts, errors, addError)
 			case "required_with_all":
-				errors = validate.RequiredWithAll(input, body_parse, opts, errors, addError)
+				errors = validate.RequiredWithAll(input.Name, body_parse, opts, errors, addError)
 			case "required_without":
-				errors = validate.RequiredWithout(input, body_parse, opts, errors, addError)
+				errors = validate.RequiredWithout(input.Name, body_parse, opts, errors, addError)
 			case "required_without_all":
-				errors = validate.RequiredWithoutAll(input, body_parse, opts, errors, addError)
+				errors = validate.RequiredWithoutAll(input.Name, body_parse, opts, errors, addError)
 			case "array":
-				errors = validate.Array(input, body_parse, opts, errors, addError)
+				errors = validate.Array(input.Name, body_parse, opts, errors, addError)
 			case "type":
-				errors = validate.Type(input, body_parse, opts, errors, addError)
+				errors = validate.Type(input.Name, body_parse, opts, errors, addError)
 			case "date":
-				errors = validate.Date(input, body_parse, opts, errors, addError)
+				errors = validate.Date(input.Name, body_parse, opts, errors, addError)
 			case "nullable":
 				isNull := false
-				errors, isNull = validate.Nullable(input, body_parse, opts, errors, addError)
+				errors, isNull = validate.Nullable(input.Name, body_parse, opts, errors, addError)
 
 				if isNull {
 					skipRulesMap = true
 				}
 			default:
-				errors = addError(input, input, errors, "The rule "+rule+" is not valid")
+				errors = addError(input.Name, input.Name, errors, fmt.Sprintf("The rule %s is not valid", rule.Rule))
 			}
 
 			if skipRulesMap {
@@ -150,8 +166,8 @@ func ValidateRequest(body map[string]interface{}, rules map[string]string, resul
 			}
 		}
 
-		if _, ok := body_parse[input]; ok {
-			safePayload[input] = body_parse[input]
+		if _, ok := body_parse[input.Name]; ok {
+			safePayload[input.Name] = body_parse[input.Name]
 		}
 	}
 
@@ -191,18 +207,18 @@ func ValidateRequest(body map[string]interface{}, rules map[string]string, resul
 }
 
 func getRuleWithOptions(rule string) []string {
-	parts := strings.Split(rule, ":")
-
-	var build_rule []string
-	build_rule = append(build_rule, parts[0])
-
-	if len(parts) > 1 {
-		options := strings.Split(parts[1], ",")
-
-		build_rule = append(build_rule, options...)
+	if !strings.Contains(rule, ":") {
+		return []string{rule}
 	}
 
-	return build_rule
+	parts := strings.SplitN(rule, ":", 2)
+
+	opts := strings.Split(parts[1], ",")
+
+	all := []string{parts[0]}
+	all = append(all, opts...)
+
+	return all
 }
 
 func addError(input string, rule string, errors map[string]interface{}, error string) map[string]interface{} {
