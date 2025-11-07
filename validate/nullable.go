@@ -6,8 +6,8 @@ func Nullable(input string, payload map[string]interface{}, options []string, er
 		return errors, false
 	}
 
-	if payload[input] == nil {
-		return errors, true
+	if payload[input] != nil {
+		return errors, false
 	}
 
 	return errors, true
