@@ -1,6 +1,8 @@
 package validate
 
-func NotIn(input string, payload map[string]interface{}, options []string, errors map[string]interface{}, addError func(string, string, map[string]interface{}, string) map[string]interface{}) map[string]interface{} {
+import "fmt"
+
+func NotIn(input string, payload map[string]interface{}, options []string, errors map[string]interface{}, addError func(string, string, map[string]interface{}, string) map[string]interface{}, customeErrors map[string]string) map[string]interface{} {
 	value := payload[input]
 
 	if value == nil || value == "" {
@@ -16,7 +18,14 @@ func NotIn(input string, payload map[string]interface{}, options []string, error
 	}
 
 	if encontrado {
-		errors = addError(input, "notin", errors, "El valor se encontró en las opciones prohibidas")
+		tmpError := "El valor se encontró en las opciones prohibidas"
+
+		customeErrorKey := fmt.Sprintf("%s.notin", input)
+		if customeError, exists := customeErrors[customeErrorKey]; exists {
+			tmpError = customeError
+		}
+
+		errors = addError(input, "notin", errors, tmpError)
 	}
 
 	return errors

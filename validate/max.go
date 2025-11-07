@@ -1,16 +1,22 @@
 package validate
 
 import (
+	"fmt"
 	"reflect"
 	"strconv"
 )
 
-func Max(input string, payload map[string]interface{}, options []string, errors map[string]interface{}, addError func(string, string, map[string]interface{}, string) map[string]interface{}) map[string]interface{} {
+func Max(input string, payload map[string]interface{}, options []string, errors map[string]interface{}, addError func(string, string, map[string]interface{}, string) map[string]interface{}, customeErrors map[string]string) map[string]interface{} {
 	value := payload[input]
 
 	max, err := strconv.ParseInt(options[0], 10, 64)
 	if err != nil {
-		errors = addError(input, "min", errors, "El campo "+input+" debe ser un número")
+		tmpError := fmt.Sprintf("El campo %s debe ser un número", input)
+		tmpErrorKey := fmt.Sprintf("%s.max", input)
+		if customeError, exists := customeErrors[tmpErrorKey]; exists {
+			tmpError = customeError
+		}
+		errors = addError(input, "max", errors, tmpError)
 		return errors
 	}
 
@@ -18,21 +24,36 @@ func Max(input string, payload map[string]interface{}, options []string, errors 
 		strlen := len(value.(string))
 
 		if strlen > int(max) {
-			errors = addError(input, "min", errors, "El campo "+input+" debe tener como máximo "+options[0]+" caracteres")
+			tmpError := fmt.Sprintf("El campo %s debe tener como máximo %s caracteres", input, options[0])
+			tmpErrorKey := fmt.Sprintf("%s.max", input)
+			if customeError, exists := customeErrors[tmpErrorKey]; exists {
+				tmpError = customeError
+			}
+			errors = addError(input, "max", errors, tmpError)
 		}
 	}
 
 	if _, ok := value.(int); ok {
 		intValue := value.(int)
 		if intValue > int(max) {
-			errors = addError(input, "min", errors, "El campo "+input+" debe ser como máximo "+options[0]+"")
+			tmpError := fmt.Sprintf("El campo %s debe ser como máximo %s", input, options[0])
+			tmpErrorKey := fmt.Sprintf("%s.max", input)
+			if customeError, exists := customeErrors[tmpErrorKey]; exists {
+				tmpError = customeError
+			}
+			errors = addError(input, "max", errors, tmpError)
 		}
 	}
 
 	if _, ok := value.(float64); ok {
 		floatValue := value.(float64)
 		if floatValue > float64(max) {
-			errors = addError(input, "max", errors, "El campo "+input+" debe ser como máximo "+options[0]+"")
+			tmpError := fmt.Sprintf("El campo %s debe ser como máximo %s", input, options[0])
+			tmpErrorKey := fmt.Sprintf("%s.max", input)
+			if customeError, exists := customeErrors[tmpErrorKey]; exists {
+				tmpError = customeError
+			}
+			errors = addError(input, "max", errors, tmpError)
 		}
 	}
 
@@ -40,7 +61,12 @@ func Max(input string, payload map[string]interface{}, options []string, errors 
 	kind := val.Kind()
 	if kind == reflect.Slice || kind == reflect.Array {
 		if val.Len() > int(max) {
-			errors = addError(input, "max", errors, "El campo "+input+" debe tener como máximo "+options[0]+" elementos")
+			tmpError := fmt.Sprintf("El campo %s debe tener como máximo %s elementos", input, options[0])
+			tmpErrorKey := fmt.Sprintf("%s.max", input)
+			if customeError, exists := customeErrors[tmpErrorKey]; exists {
+				tmpError = customeError
+			}
+			errors = addError(input, "max", errors, tmpError)
 		}
 	}
 

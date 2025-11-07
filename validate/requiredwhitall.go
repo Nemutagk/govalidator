@@ -1,10 +1,18 @@
 package validate
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
 
-func RequiredWithAll(input string, payload map[string]interface{}, options []string, errors map[string]interface{}, addError func(string, string, map[string]interface{}, string) map[string]interface{}) map[string]interface{} {
+func RequiredWithAll(input string, payload map[string]interface{}, options []string, errors map[string]interface{}, addError func(string, string, map[string]interface{}, string) map[string]interface{}, customeErrors map[string]string) map[string]interface{} {
 	if len(options) != 1 {
-		return addError(input, "required_with_all", errors, "La opción no está definida")
+		tmpError := "La opción no está definida"
+		tmpErrorKey := fmt.Sprintf("%s.required_with_all", input)
+		if customeError, exists := customeErrors[tmpErrorKey]; exists {
+			tmpError = customeError
+		}
+		return addError(input, "required_with_all", errors, tmpError)
 	}
 
 	all_defined := true
@@ -17,7 +25,12 @@ func RequiredWithAll(input string, payload map[string]interface{}, options []str
 
 	if _, exists_input := payload[input]; !exists_input && all_defined {
 		all_inputs := strings.Join(options, ", ")
-		errors = addError(input, "required_with_all", errors, "El campo \""+input+"\" debe estar definido cuando los campos \""+all_inputs+"\" están definidos")
+		tmpError := fmt.Sprintf("El campo \"%s\" debe estar definido cuando los campos \"%s\" están definidos", input, all_inputs)
+		tmpErrorKey := fmt.Sprintf("%s.required_with_all", input)
+		if customeError, exists := customeErrors[tmpErrorKey]; exists {
+			tmpError = customeError
+		}
+		errors = addError(input, "required_with_all", errors, tmpError)
 		return errors
 	}
 

@@ -5,7 +5,7 @@ import (
 	"reflect"
 )
 
-func Type(input string, payload map[string]interface{}, options []string, errors map[string]interface{}, addError func(string, string, map[string]interface{}, string) map[string]interface{}) map[string]interface{} {
+func Type(input string, payload map[string]interface{}, options []string, errors map[string]interface{}, addError func(string, string, map[string]interface{}, string) map[string]interface{}, customeErrors map[string]string) map[string]interface{} {
 	value, exist := payload[input]
 
 	if !exist {
@@ -13,14 +13,24 @@ func Type(input string, payload map[string]interface{}, options []string, errors
 	}
 
 	if len(options) == 0 {
-		errors = addError(input, "type", errors, "El tipo no está definido")
+		tmpError := "El tipo no está definido"
+		tmpErrorKey := fmt.Sprintf("%s.type", input)
+		if customeError, exists := customeErrors[tmpErrorKey]; exists {
+			tmpError = customeError
+		}
+		errors = addError(input, "type", errors, tmpError)
 		return errors
 	}
 
 	var_type := reflect.TypeOf(value).String()
 	fmt.Println("var_type: ", var_type)
 	if var_type != options[0] {
-		errors = addError(input, "type", errors, "El tipo del campo "+input+" no es "+options[0])
+		tmpError := fmt.Sprintf("El tipo del campo \"%s\" no es \"%s\"", input, options[0])
+		tmpErrorKey := fmt.Sprintf("%s.type", input)
+		if customeError, exists := customeErrors[tmpErrorKey]; exists {
+			tmpError = customeError
+		}
+		errors = addError(input, "type", errors, tmpError)
 		return errors
 	}
 

@@ -9,7 +9,7 @@ import (
 * Params: db connection, table name, column name
 * Example: unique:princial,users,email
  */
-func Unique(input string, payload map[string]interface{}, options []string, list_errors map[string]interface{}, addError func(string, string, map[string]interface{}, string) map[string]interface{}, listModels map[string]func(data string) bool) map[string]interface{} {
+func Unique(input string, payload map[string]interface{}, options []string, list_errors map[string]interface{}, addError func(string, string, map[string]interface{}, string) map[string]interface{}, listModels map[string]func(data string) bool, customeErrors map[string]string) map[string]interface{} {
 	if len(options) != 1 {
 		list_errors = addError(input, "unique", list_errors, "the options is not valid")
 		return list_errors
@@ -40,7 +40,14 @@ func Unique(input string, payload map[string]interface{}, options []string, list
 	result := model(value)
 
 	if !result {
-		list_errors = addError(input, "unique", list_errors, "El valor '"+value+"'ya está registrado")
+		tmpError := "El valor '" + value + "' ya está registrado"
+
+		customeErrorKey := fmt.Sprintf("%s.unique", input)
+		if customeError, exists := customeErrors[customeErrorKey]; exists {
+			tmpError = customeError
+		}
+
+		list_errors = addError(input, "unique", list_errors, tmpError)
 	}
 
 	return list_errors
