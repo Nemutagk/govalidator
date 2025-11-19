@@ -60,7 +60,7 @@ func Before(input string, payload map[string]interface{}, options []string, erro
 
 	if _, exists := humanDays[options[0]]; exists {
 		if options[0] == "now" || options[0] == "current" || options[0] == "today" {
-			if date.Before(time.Now()) {
+			if !date.Before(time.Now()) {
 				tmpError := "La fecha no es anterior a la fecha actual"
 
 				customeErrorKey := fmt.Sprintf("%s.before", input)
@@ -73,7 +73,7 @@ func Before(input string, payload map[string]interface{}, options []string, erro
 		}
 
 		if options[0] == "tomorrow" {
-			if date.Before(time.Now().AddDate(0, 0, 1)) {
+			if !date.Before(time.Now().AddDate(0, 0, 1)) {
 				tmpError := "La fecha no es anterior a mañana"
 
 				customeErrorKey := fmt.Sprintf("%s.before", input)
@@ -86,7 +86,7 @@ func Before(input string, payload map[string]interface{}, options []string, erro
 		}
 
 		if options[0] == "yesterday" {
-			if date.Before(time.Now().AddDate(0, 0, -1)) {
+			if !date.Before(time.Now().AddDate(0, 0, -1)) {
 				tmpError := "La fecha no es anterior a ayer"
 
 				customeErrorKey := fmt.Sprintf("%s.before", input)
@@ -107,7 +107,7 @@ func Before(input string, payload map[string]interface{}, options []string, erro
 		return errors
 	}
 
-	if date.Before(compare_date) {
+	if !date.Before(compare_date) {
 		tmpError := "La fecha no es anterior a la fecha " + options[0]
 
 		customeErrorKey := fmt.Sprintf("%s.before", input)
