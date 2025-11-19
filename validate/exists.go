@@ -2,7 +2,7 @@ package validate
 
 import "fmt"
 
-func Exists(input string, payload map[string]interface{}, options []string, errors map[string]interface{}, addError func(string, string, map[string]interface{}, string) map[string]interface{}, modelList map[string]func(data string) bool, customeErrors map[string]string) map[string]interface{} {
+func Exists(input string, payload map[string]interface{}, options []string, errors map[string]interface{}, addError func(string, string, map[string]interface{}, string) map[string]interface{}, modelList map[string]func(data string, payload map[string]any) bool, customeErrors map[string]string) map[string]interface{} {
 	if len(options) != 1 {
 		tmpError := "la configuración de conexión no es válida"
 		tmpErrorKey := fmt.Sprintf("%s.exists", input)
@@ -35,7 +35,7 @@ func Exists(input string, payload map[string]interface{}, options []string, erro
 		return errors
 	}
 
-	result := model(value)
+	result := model(value, payload)
 
 	if !result {
 		tmpError := fmt.Sprintf("El valor '%s' no existe", value)

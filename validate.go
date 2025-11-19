@@ -7,7 +7,7 @@ import (
 	"github.com/Nemutagk/govalidator/v2/validate"
 )
 
-func ValidateRequest(body map[string]any, rules map[string]string, customeErrors map[string]string, models map[string]func(data string) bool) (map[string]any, *goerrors.GError) {
+func ValidateRequest(body map[string]any, rules map[string]string, customeErrors map[string]string, models map[string]func(data string, payload map[string]any) bool) (map[string]any, *goerrors.GError) {
 	rules_inputs := make(map[string]any)
 
 	for input, rules := range rules {
@@ -88,6 +88,8 @@ func ValidateRequest(body map[string]any, rules map[string]string, customeErrors
 				errors = validate.Date(input, body, opts, errors, addError, customeErrors)
 			case "date_format":
 				errors = validate.DateFormat(input, body, opts, errors, addError, customeErrors)
+			case "custome":
+				errors = validate.Custome(input, body, opts, errors, addError, models, customeErrors)
 
 			default:
 				errors = addError(input, input, errors, "The rule "+rule+" is not valid")
