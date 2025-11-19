@@ -129,7 +129,8 @@ func getRuleWithOptions(rule string) []string {
 	build_rule = append(build_rule, parts[0])
 
 	if len(parts) > 1 {
-		options := strings.Split(parts[1], ",")
+		optionsJoined := strings.Join(parts[1:], ":")
+		options := strings.Split(optionsJoined, ",")
 
 		build_rule = append(build_rule, options...)
 	}
