@@ -86,6 +86,8 @@ func ValidateRequest(body map[string]any, rules map[string]string, customeErrors
 				errors = validate.Type(input, body, opts, errors, addError, customeErrors)
 			case "date":
 				errors = validate.Date(input, body, opts, errors, addError, customeErrors)
+			case "date_format":
+				errors = validate.DateFormat(input, body, opts, errors, addError, customeErrors)
 
 			default:
 				errors = addError(input, input, errors, "The rule "+rule+" is not valid")
