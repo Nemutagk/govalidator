@@ -18,7 +18,12 @@ func Before(input string, payload map[string]interface{}, options []string, erro
 		return errors
 	}
 
-	date, err_date := time.Parse("2006-01-02", value.(string))
+	formato := "2006-01-02"
+	if len(options) >= 2 {
+		formato = options[1]
+	}
+
+	date, err_date := time.Parse(formato, value.(string))
 
 	if err_date == nil {
 		if options[0] == "now" || options[0] == "current" || options[0] == "today" {
@@ -60,7 +65,7 @@ func Before(input string, payload map[string]interface{}, options []string, erro
 			}
 		}
 
-		compare_date, err := time.Parse("2006-01-02", options[0])
+		compare_date, err := time.Parse(formato, options[0])
 		if err == nil {
 			if date.After(compare_date) {
 				tmpError := "La fecha no es anterior a la fecha " + options[0]

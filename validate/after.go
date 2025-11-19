@@ -8,7 +8,7 @@ import (
 
 func After(input string, payload map[string]interface{}, options []string, errors map[string]interface{}, addError func(string, string, map[string]interface{}, string) map[string]interface{}, customeErrors map[string]string) map[string]interface{} {
 	if len(options) == 0 {
-		errors = addError(input, "before", errors, "El valor a comprar no esta definido")
+		errors = addError(input, "after", errors, "El valor a comprar no esta definido")
 		return errors
 	}
 
@@ -18,7 +18,12 @@ func After(input string, payload map[string]interface{}, options []string, error
 		return errors
 	}
 
-	date, err_date := time.Parse("2006-01-02", value.(string))
+	formato := "2006-01-02T15:04:05"
+	if len(options) >= 2 {
+		formato = options[1]
+	}
+
+	date, err_date := time.Parse(formato, value.(string))
 
 	if err_date == nil {
 		if options[0] == "now" || options[0] == "current" || options[0] == "today" {
@@ -60,7 +65,7 @@ func After(input string, payload map[string]interface{}, options []string, error
 			}
 		}
 
-		compare_date, err := time.Parse("2006-01-02", options[0])
+		compare_date, err := time.Parse(formato, options[0])
 		if err == nil {
 			if date.Before(compare_date) {
 				tmpError := "La fecha no es posterior a la fecha " + options[0]
