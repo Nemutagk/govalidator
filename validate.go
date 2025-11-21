@@ -1,98 +1,87 @@
 package govalidator
 
 import (
-	"strings"
-
 	"github.com/Nemutagk/goerrors"
 	"github.com/Nemutagk/govalidator/v2/validate"
 )
 
-func ValidateRequest(body map[string]any, rules map[string]string, customeErrors map[string]string, models map[string]func(data string, payload map[string]any) bool) (map[string]any, *goerrors.GError) {
-	rules_inputs := make(map[string]any)
+type Input struct {
+	Name  string
+	Rules []Rule
+}
 
-	for input, rules := range rules {
-		separated_rules := strings.Split(rules, "|")
-		rules_building := make(map[string]any)
-		for _, rule := range separated_rules {
-			tmp_rule := getRuleWithOptions(rule)
-			rules_building[tmp_rule[0]] = tmp_rule[1:]
-		}
-		rules_inputs[input] = rules_building
-	}
+type Rule struct {
+	Name    string
+	Options []string
+}
 
+func ValidateRequest(body map[string]any, rules []Input, customeErrors map[string]string, models map[string]func(data string, payload map[string]any) bool) (map[string]any, *goerrors.GError) {
 	errors := make(map[string]any)
 	safePayload := make(map[string]any)
 
-	for input, rules := range rules_inputs {
-		rulesMap, ok := rules.(map[string]interface{})
-		if !ok {
-			continue
-		}
-
+	for _, input := range rules {
 		skipRulesMap := false
+		inputName := input.Name
 
-		for rule, options := range rulesMap {
-			opts, ok := options.([]string)
-			if !ok {
-				continue
-			}
+		for _, rule := range input.Rules {
+			opts := rule.Options
 
-			switch rule {
+			switch rule.Name {
 			case "email":
-				errors = validate.Email(input, body, opts, errors, addError, customeErrors)
+				errors = validate.Email(inputName, body, opts, errors, addError, customeErrors)
 			case "confirmation":
-				errors = validate.Confirmation(input, body, opts, errors, addError, customeErrors)
+				errors = validate.Confirmation(inputName, body, opts, errors, addError, customeErrors)
 			case "unique":
-				errors = validate.Unique(input, body, opts, errors, addError, models, customeErrors)
+				errors = validate.Unique(inputName, body, opts, errors, addError, models, customeErrors)
 			case "in":
-				errors = validate.In(input, body, opts, errors, addError, customeErrors)
+				errors = validate.In(inputName, body, opts, errors, addError, customeErrors)
 			case "not_in":
-				errors = validate.NotIn(input, body, opts, errors, addError, customeErrors)
+				errors = validate.NotIn(inputName, body, opts, errors, addError, customeErrors)
 			case "before":
-				errors = validate.Before(input, body, opts, errors, addError, customeErrors)
+				errors = validate.Before(inputName, body, opts, errors, addError, customeErrors)
 			case "after":
-				errors = validate.After(input, body, opts, errors, addError, customeErrors)
+				errors = validate.After(inputName, body, opts, errors, addError, customeErrors)
 			case "ip":
-				errors = validate.Ip(input, body, opts, errors, addError, customeErrors)
+				errors = validate.Ip(inputName, body, opts, errors, addError, customeErrors)
 			case "password":
-				errors = validate.Password(input, body, opts, errors, addError, customeErrors)
+				errors = validate.Password(inputName, body, opts, errors, addError, customeErrors)
 			case "exists":
-				errors = validate.Exists(input, body, opts, errors, addError, models, customeErrors)
+				errors = validate.Exists(inputName, body, opts, errors, addError, models, customeErrors)
 			case "min":
-				errors = validate.Min(input, body, opts, errors, addError, customeErrors)
+				errors = validate.Min(inputName, body, opts, errors, addError, customeErrors)
 			case "max":
-				errors = validate.Max(input, body, opts, errors, addError, customeErrors)
+				errors = validate.Max(inputName, body, opts, errors, addError, customeErrors)
 			case "boolean":
-				errors = validate.Boolean(input, body, opts, errors, addError, customeErrors)
+				errors = validate.Boolean(inputName, body, opts, errors, addError, customeErrors)
 			case "sometimes":
-				if _, exists_input := body[input]; !exists_input {
+				if _, exists_input := body[inputName]; !exists_input {
 					//Si no existe el input no se validan lás demás reglas existentes
 					// log.Println("Input", input, "no existe en el body, no se validan las demás reglas")
 					skipRulesMap = true
 				}
 			case "required":
-				errors = validate.Required(input, body, opts, errors, addError, customeErrors)
+				errors = validate.Required(inputName, body, opts, errors, addError, customeErrors)
 			case "required_with":
-				errors = validate.RequiredWith(input, body, opts, errors, addError, customeErrors)
+				errors = validate.RequiredWith(inputName, body, opts, errors, addError, customeErrors)
 			case "required_with_all":
-				errors = validate.RequiredWithAll(input, body, opts, errors, addError, customeErrors)
+				errors = validate.RequiredWithAll(inputName, body, opts, errors, addError, customeErrors)
 			case "required_without":
-				errors = validate.RequiredWithout(input, body, opts, errors, addError, customeErrors)
+				errors = validate.RequiredWithout(inputName, body, opts, errors, addError, customeErrors)
 			case "required_without_all":
-				errors = validate.RequiredWithoutAll(input, body, opts, errors, addError, customeErrors)
+				errors = validate.RequiredWithoutAll(inputName, body, opts, errors, addError, customeErrors)
 			case "array":
-				errors = validate.Array(input, body, opts, errors, addError, customeErrors)
+				errors = validate.Array(inputName, body, opts, errors, addError, customeErrors)
 			case "type":
-				errors = validate.Type(input, body, opts, errors, addError, customeErrors)
+				errors = validate.Type(inputName, body, opts, errors, addError, customeErrors)
 			case "date":
-				errors = validate.Date(input, body, opts, errors, addError, customeErrors)
+				errors = validate.Date(inputName, body, opts, errors, addError, customeErrors)
 			case "date_format":
-				errors = validate.DateFormat(input, body, opts, errors, addError, customeErrors)
+				errors = validate.DateFormat(inputName, body, opts, errors, addError, customeErrors)
 			case "custome":
-				errors = validate.Custome(input, body, opts, errors, addError, models, customeErrors)
+				errors = validate.Custome(inputName, body, opts, errors, addError, models, customeErrors)
 
 			default:
-				errors = addError(input, input, errors, "The rule "+rule+" is not valid")
+				errors = addError(inputName, rule.Name, errors, "The rule "+rule.Name+" is not valid")
 			}
 
 			if skipRulesMap {
@@ -100,8 +89,8 @@ func ValidateRequest(body map[string]any, rules map[string]string, customeErrors
 			}
 		}
 
-		if _, ok := body[input]; ok {
-			safePayload[input] = body[input]
+		if _, ok := body[inputName]; ok {
+			safePayload[inputName] = body[inputName]
 		}
 	}
 
@@ -120,22 +109,6 @@ func ValidateRequest(body map[string]any, rules map[string]string, customeErrors
 	}
 
 	return safePayload, nil
-}
-
-func getRuleWithOptions(rule string) []string {
-	parts := strings.Split(rule, ":")
-
-	var build_rule []string
-	build_rule = append(build_rule, parts[0])
-
-	if len(parts) > 1 {
-		optionsJoined := strings.Join(parts[1:], ":")
-		options := strings.Split(optionsJoined, ",")
-
-		build_rule = append(build_rule, options...)
-	}
-
-	return build_rule
 }
 
 func addError(input string, rule string, errors map[string]interface{}, error string) map[string]interface{} {
