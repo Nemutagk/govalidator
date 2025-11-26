@@ -45,7 +45,7 @@ func rangeInputs(body map[string]any, inputs []Input, customeallErrors map[strin
 	allErrors := make(map[string]any)
 	includesSometimesRule := make(map[string]bool)
 
-	for sliceIndex, input := range inputs {
+	for index, input := range inputs {
 		// log.Printf("--------------------------------------------------")
 		inputName := input.Name
 		// log.Printf("Processing raw input: %s", inputName)
@@ -74,8 +74,7 @@ func rangeInputs(body map[string]any, inputs []Input, customeallErrors map[strin
 
 		switch value.(type) {
 		case map[string]any:
-			sliceIndexStr := strconv.Itoa(sliceIndex)
-			tmpPayload, tmpErrors, tmpSometimes := rangeInputs(value.(map[string]any), []Input{input}, customeallErrors, models, sliceIndexStr)
+			tmpPayload, tmpErrors, tmpSometimes := rangeInputs(value.(map[string]any), []Input{input}, customeallErrors, models, sliceIndex)
 			for k, v := range tmpPayload {
 				safePayload[k] = v
 			}
@@ -88,7 +87,7 @@ func rangeInputs(body map[string]any, inputs []Input, customeallErrors map[strin
 		case []any:
 			// log.Printf("Input %s is an array", input.Name)
 			// log.Printf("inputName: %s", inputName)
-			sliceIndexStr := strconv.Itoa(sliceIndex)
+			sliceIndexStr := strconv.Itoa(index)
 			if inputName != input.Name {
 				tmpPayload, tmpErrors, tmpSometimes := rangeArrayInput(value.([]any), body, input, customeallErrors, models, sliceIndexStr)
 				if safePayload[inputName] == nil {
@@ -126,8 +125,7 @@ func rangeInputs(body map[string]any, inputs []Input, customeallErrors map[strin
 				includesSometimesRule[k] = v
 			}
 		default:
-			sliceIndexStr := strconv.Itoa(sliceIndex)
-			value, tmpErrors, tmpSometimes := applyRules(input.Name, input, value, body, customeallErrors, models, sliceIndexStr)
+			value, tmpErrors, tmpSometimes := applyRules(input.Name, input, value, body, customeallErrors, models, sliceIndex)
 			safePayload[input.Name] = value
 			for k, v := range tmpErrors {
 				allErrors[k] = v
