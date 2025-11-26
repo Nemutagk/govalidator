@@ -9,8 +9,9 @@ import (
 )
 
 type Input struct {
-	Name  string
-	Rules []Rule
+	Name   string
+	Parent string
+	Rules  []Rule
 }
 
 type Rule struct {
@@ -53,12 +54,22 @@ func rangeInputs(body map[string]any, inputs []Input, customeallErrors map[strin
 			parts := strings.Split(inputName, ".")
 			inputName = parts[0]
 			input.Name = strings.Join(parts[1:], ".")
+
+			if input.Parent == "" {
+				input.Parent = inputName
+			}
 		}
 		// log.Printf("Processed input: %s", inputName)
 
 		value, exists := body[inputName]
 		if !exists {
 			value = nil
+		}
+
+		if input.Parent != "" {
+			if _, exists := includesSometimesRule[input.Parent]; exists {
+				input.Rules = append([]Rule{{Name: "sometimes"}}, input.Rules...)
+			}
 		}
 
 		switch value.(type) {
@@ -141,6 +152,10 @@ func rangeArrayInput(body []any, fullBody map[string]any, inputs Input, customea
 		parts := strings.Split(inputName, ".")
 		inputName = parts[0]
 		inputs.Name = strings.Join(parts[1:], ".")
+
+		if inputs.Parent == "" {
+			inputs.Parent = inputName
+		}
 	}
 	// log.Printf("Processing array input: %s", inputName)
 
@@ -233,6 +248,7 @@ func applyRules(inputName any, input Input, value any, body map[string]any, cust
 				//Si no existe el input no se validan lás demás reglas existentes
 				// // // log.Println("Input", input, "no existe en el body, no se validan las demás reglas")
 				skipRulesMap = true
+				includesSometimesRule[inputNameStr] = true
 			}
 		case "required":
 			allErrors = validate.Required(inputNameStr, value, body, opts, sliceIndex, allErrors, addError, customeallErrors)
