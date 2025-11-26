@@ -7,7 +7,7 @@ require (
 	github.com/gofrs/uuid v4.4.0+incompatible
 )
 
-require github.com/Nemutagk/godb/v2 v2.0.0 // indirect
+require github.com/Nemutagk/godb/v2 v2.0.0
 
 // replace github.com/Nemutagk/godb/v2 => /opt/modules/db
 

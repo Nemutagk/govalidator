@@ -1,6 +1,9 @@
 package govalidator
 
 import (
+	"strconv"
+	"strings"
+
 	"github.com/Nemutagk/goerrors"
 	"github.com/Nemutagk/govalidator/v2/validate"
 )
@@ -15,89 +18,13 @@ type Rule struct {
 	Options []string
 }
 
-func ValidateRequest(body map[string]any, rules []Input, customeErrors map[string]string, models map[string]func(data string, payload map[string]any) bool) (map[string]any, *goerrors.GError) {
-	errors := make(map[string]any)
-	safePayload := make(map[string]any)
-
-	for _, input := range rules {
-		skipRulesMap := false
-		inputName := input.Name
-
-		for _, rule := range input.Rules {
-			opts := rule.Options
-
-			switch rule.Name {
-			case "email":
-				errors = validate.Email(inputName, body, opts, errors, addError, customeErrors)
-			case "confirmation":
-				errors = validate.Confirmation(inputName, body, opts, errors, addError, customeErrors)
-			case "unique":
-				errors = validate.Unique(inputName, body, opts, errors, addError, models, customeErrors)
-			case "in":
-				errors = validate.In(inputName, body, opts, errors, addError, customeErrors)
-			case "not_in":
-				errors = validate.NotIn(inputName, body, opts, errors, addError, customeErrors)
-			case "before":
-				errors = validate.Before(inputName, body, opts, errors, addError, customeErrors)
-			case "after":
-				errors = validate.After(inputName, body, opts, errors, addError, customeErrors)
-			case "ip":
-				errors = validate.Ip(inputName, body, opts, errors, addError, customeErrors)
-			case "password":
-				errors = validate.Password(inputName, body, opts, errors, addError, customeErrors)
-			case "exists":
-				errors = validate.Exists(inputName, body, opts, errors, addError, models, customeErrors)
-			case "min":
-				errors = validate.Min(inputName, body, opts, errors, addError, customeErrors)
-			case "max":
-				errors = validate.Max(inputName, body, opts, errors, addError, customeErrors)
-			case "boolean":
-				errors = validate.Boolean(inputName, body, opts, errors, addError, customeErrors)
-			case "sometimes":
-				if _, exists_input := body[inputName]; !exists_input {
-					//Si no existe el input no se validan lás demás reglas existentes
-					// log.Println("Input", input, "no existe en el body, no se validan las demás reglas")
-					skipRulesMap = true
-				}
-			case "required":
-				errors = validate.Required(inputName, body, opts, errors, addError, customeErrors)
-			case "required_with":
-				errors = validate.RequiredWith(inputName, body, opts, errors, addError, customeErrors)
-			case "required_with_all":
-				errors = validate.RequiredWithAll(inputName, body, opts, errors, addError, customeErrors)
-			case "required_without":
-				errors = validate.RequiredWithout(inputName, body, opts, errors, addError, customeErrors)
-			case "required_without_all":
-				errors = validate.RequiredWithoutAll(inputName, body, opts, errors, addError, customeErrors)
-			case "array":
-				errors = validate.Array(inputName, body, opts, errors, addError, customeErrors)
-			case "type":
-				errors = validate.Type(inputName, body, opts, errors, addError, customeErrors)
-			case "date":
-				errors = validate.Date(inputName, body, opts, errors, addError, customeErrors)
-			case "date_format":
-				errors = validate.DateFormat(inputName, body, opts, errors, addError, customeErrors)
-			case "custome":
-				errors = validate.Custome(inputName, body, opts, errors, addError, models, customeErrors)
-
-			default:
-				errors = addError(inputName, rule.Name, errors, "The rule "+rule.Name+" is not valid")
-			}
-
-			if skipRulesMap {
-				break
-			}
-		}
-
-		if _, ok := body[inputName]; ok {
-			safePayload[inputName] = body[inputName]
-		}
-	}
+func ValidateRequest(body map[string]any, inputs []Input, customeallErrors map[string]string, models map[string]func(data string, payload map[string]any) bool) (map[string]any, *goerrors.GError) {
+	safePayload, currentallErrors, _ := rangeInputs(body, inputs, customeallErrors, models, "")
 
 	allErrors := make([]string, 0)
-	if len(errors) > 0 {
-		for input, inputErrors := range errors {
-			for _, errMessages := range inputErrors.(map[string]interface{}) {
+	if len(currentallErrors) > 0 {
+		for input, inputallErrors := range currentallErrors {
+			for _, errMessages := range inputallErrors.(map[string]interface{}) {
 				for _, errMessage := range errMessages.([]string) {
 					allErrors = append(allErrors, input+": "+errMessage)
 				}
@@ -111,25 +38,254 @@ func ValidateRequest(body map[string]any, rules []Input, customeErrors map[strin
 	return safePayload, nil
 }
 
-func addError(input string, rule string, errors map[string]interface{}, error string) map[string]interface{} {
-	if _, exists_input := errors[input]; !exists_input {
-		errors[input] = map[string]interface{}{
+func rangeInputs(body map[string]any, inputs []Input, customeallErrors map[string]string, models map[string]func(data string, payload map[string]any) bool, sliceIndex string) (map[string]any, map[string]any, map[string]bool) {
+	// log.Printf("====================> Starting rangeInputs ====================")
+	safePayload := make(map[string]any)
+	allErrors := make(map[string]any)
+	includesSometimesRule := make(map[string]bool)
+
+	for sliceIndex, input := range inputs {
+		// log.Printf("--------------------------------------------------")
+		inputName := input.Name
+		// log.Printf("Processing raw input: %s", inputName)
+
+		if strings.Contains(inputName, ".") {
+			parts := strings.Split(inputName, ".")
+			inputName = parts[0]
+			input.Name = strings.Join(parts[1:], ".")
+		}
+		// log.Printf("Processed input: %s", inputName)
+
+		value, exists := body[inputName]
+		if !exists {
+			value = nil
+		}
+
+		switch value.(type) {
+		case map[string]any:
+			sliceIndexStr := strconv.Itoa(sliceIndex)
+			tmpPayload, tmpErrors, tmpSometimes := rangeInputs(value.(map[string]any), []Input{input}, customeallErrors, models, sliceIndexStr)
+			for k, v := range tmpPayload {
+				safePayload[k] = v
+			}
+			for k, v := range tmpErrors {
+				allErrors[k] = v
+			}
+			for k, v := range tmpSometimes {
+				includesSometimesRule[k] = v
+			}
+		case []any:
+			// log.Printf("Input %s is an array", input.Name)
+			// log.Printf("inputName: %s", inputName)
+			sliceIndexStr := strconv.Itoa(sliceIndex)
+			if inputName != input.Name {
+				tmpPayload, tmpErrors, tmpSometimes := rangeArrayInput(value.([]any), body, input, customeallErrors, models, sliceIndexStr)
+				if safePayload[inputName] == nil {
+					safePayload[inputName] = []any{}
+				}
+
+				valueSlice, err := value.([]any)
+				if !err {
+					valueSlice = []any{}
+				}
+
+				for k, v := range tmpPayload {
+					if k < len(valueSlice) {
+						valueSlice[k] = v
+					} else {
+						valueSlice = append(valueSlice, v)
+					}
+				}
+
+				for k, v := range tmpErrors {
+					allErrors[k] = v
+				}
+				for k, v := range tmpSometimes {
+					includesSometimesRule[k] = v
+				}
+				continue
+			}
+
+			tmpPayload, tmpErrors, tmpSometimes := applyRules(inputName, input, value, body, customeallErrors, models, sliceIndexStr)
+			safePayload[input.Name] = tmpPayload
+			for k, v := range tmpErrors {
+				allErrors[k] = v
+			}
+			for k, v := range tmpSometimes {
+				includesSometimesRule[k] = v
+			}
+		default:
+			sliceIndexStr := strconv.Itoa(sliceIndex)
+			value, tmpErrors, tmpSometimes := applyRules(input.Name, input, value, body, customeallErrors, models, sliceIndexStr)
+			safePayload[input.Name] = value
+			for k, v := range tmpErrors {
+				allErrors[k] = v
+			}
+			for k, v := range tmpSometimes {
+				includesSometimesRule[k] = v
+			}
+		}
+	}
+
+	return safePayload, allErrors, includesSometimesRule
+}
+
+func rangeArrayInput(body []any, fullBody map[string]any, inputs Input, customeallErrors map[string]string, models map[string]func(data string, payload map[string]any) bool, sliceIndex string) ([]any, map[string]any, map[string]bool) {
+	// log.Printf("====================> Starting rangeArrayInput ====================")
+	safePayload := []any{}
+	allErrors := make(map[string]any)
+	includesSometimesRule := make(map[string]bool)
+
+	inputName := inputs.Name
+	if strings.Contains(inputName, ".") {
+		parts := strings.Split(inputName, ".")
+		inputName = parts[0]
+		inputs.Name = strings.Join(parts[1:], ".")
+	}
+	// log.Printf("Processing array input: %s", inputName)
+
+	for index, value := range body {
+		if inputName == "*" {
+			indexStr := strconv.Itoa(index)
+			value, tmpError, tmpSometimes := applyRules(inputs.Name, inputs, value, value.(map[string]any), customeallErrors, models, indexStr)
+			safePayload = append(safePayload, value)
+			for k, v := range tmpError {
+				allErrors[k] = v
+			}
+			for k, v := range tmpSometimes {
+				includesSometimesRule[k] = v
+			}
+		} else {
+			indexInt, err := strconv.Atoi(inputName)
+			if err != nil {
+				// log.Printf("Error converting index to int: %v", err)
+				continue
+			}
+
+			if indexInt == index {
+				indexStr := strconv.Itoa(index)
+				value, tmpError, tmpSometimes := applyRules(indexStr, inputs, value, value.(map[string]any), customeallErrors, models, indexStr)
+				safePayload = append(safePayload, value)
+				for k, v := range tmpError {
+					allErrors[k] = v
+				}
+				for k, v := range tmpSometimes {
+					includesSometimesRule[k] = v
+				}
+			}
+		}
+	}
+
+	return safePayload, allErrors, includesSometimesRule
+}
+
+func applyRules(inputName any, input Input, value any, body map[string]any, customeallErrors map[string]string, models map[string]func(data string, payload map[string]any) bool, sliceIndex string) (any, map[string]any, map[string]bool) {
+	// log.Printf("====================> Starting applyRules for input ====================")
+	// log.Printf("Input Name: %v", inputName)
+	// log.Printf("Input Value: %+v", value)
+	// log.Printf("Input Rules: %+v", input.Rules)
+	// log.Printf("sliceIndex : %s", sliceIndex)
+
+	allErrors := make(map[string]any)
+	includesSometimesRule := make(map[string]bool)
+
+	skipRulesMap := false
+
+	inputNameStr := ""
+	if _, ok := inputName.(string); !ok {
+		inputNameStr = strconv.Itoa(inputName.(int))
+	} else {
+		inputNameStr = inputName.(string)
+	}
+
+	for _, rule := range input.Rules {
+		opts := rule.Options
+
+		switch rule.Name {
+		case "email":
+			allErrors = validate.Email(inputNameStr, value, body, opts, sliceIndex, allErrors, addError, customeallErrors)
+		case "confirmation":
+			allErrors = validate.Confirmation(inputNameStr, value, body, opts, sliceIndex, allErrors, addError, customeallErrors)
+		case "unique":
+			allErrors = validate.Unique(inputNameStr, value, body, opts, sliceIndex, allErrors, addError, models, customeallErrors)
+		case "in":
+			allErrors = validate.In(inputNameStr, value, body, opts, sliceIndex, allErrors, addError, customeallErrors)
+		case "not_in":
+			allErrors = validate.NotIn(inputNameStr, value, body, opts, sliceIndex, allErrors, addError, customeallErrors)
+		case "before":
+			allErrors = validate.Before(inputNameStr, value, body, opts, sliceIndex, allErrors, addError, customeallErrors)
+		case "after":
+			allErrors = validate.After(inputNameStr, value, body, opts, sliceIndex, allErrors, addError, customeallErrors)
+		case "ip":
+			allErrors = validate.Ip(inputNameStr, value, body, opts, sliceIndex, allErrors, addError, customeallErrors)
+		case "password":
+			allErrors = validate.Password(inputNameStr, value, body, opts, sliceIndex, allErrors, addError, customeallErrors)
+		case "exists":
+			allErrors = validate.Exists(inputNameStr, value, body, opts, sliceIndex, allErrors, addError, models, customeallErrors)
+		case "min":
+			allErrors = validate.Min(inputNameStr, value, body, opts, sliceIndex, allErrors, addError, customeallErrors)
+		case "max":
+			allErrors = validate.Max(inputNameStr, value, body, opts, sliceIndex, allErrors, addError, customeallErrors)
+		case "boolean":
+			allErrors = validate.Boolean(inputNameStr, value, body, opts, sliceIndex, allErrors, addError, customeallErrors)
+		case "sometimes":
+			if _, exists_input := body[inputNameStr]; !exists_input {
+				//Si no existe el input no se validan lás demás reglas existentes
+				// // // log.Println("Input", input, "no existe en el body, no se validan las demás reglas")
+				skipRulesMap = true
+			}
+		case "required":
+			allErrors = validate.Required(inputNameStr, value, body, opts, sliceIndex, allErrors, addError, customeallErrors)
+		case "required_with":
+			allErrors = validate.RequiredWith(inputNameStr, value, body, opts, sliceIndex, allErrors, addError, customeallErrors)
+		case "required_with_all":
+			allErrors = validate.RequiredWithAll(inputNameStr, value, body, opts, sliceIndex, allErrors, addError, customeallErrors)
+		case "required_without":
+			allErrors = validate.RequiredWithout(inputNameStr, value, body, opts, sliceIndex, allErrors, addError, customeallErrors)
+		case "required_without_all":
+			allErrors = validate.RequiredWithoutAll(inputNameStr, value, body, opts, sliceIndex, allErrors, addError, customeallErrors)
+		case "array":
+			allErrors = validate.Array(inputNameStr, value, body, opts, sliceIndex, allErrors, addError, customeallErrors)
+		case "type":
+			allErrors = validate.Type(inputNameStr, value, body, opts, sliceIndex, allErrors, addError, customeallErrors)
+		case "date":
+			allErrors = validate.Date(inputNameStr, value, body, opts, sliceIndex, allErrors, addError, customeallErrors)
+		case "date_format":
+			allErrors = validate.DateFormat(inputNameStr, value, body, opts, sliceIndex, allErrors, addError, customeallErrors)
+		case "custome":
+			allErrors = validate.Custome(inputNameStr, value, body, opts, sliceIndex, allErrors, addError, models, customeallErrors)
+
+		default:
+			allErrors = addError(inputNameStr, rule.Name, allErrors, "The rule "+rule.Name+" is not valid")
+		}
+
+		if skipRulesMap {
+			break
+		}
+	}
+
+	return value, allErrors, includesSometimesRule
+}
+
+func addError(input string, rule string, allErrors map[string]interface{}, error string) map[string]interface{} {
+	if _, exists_input := allErrors[input]; !exists_input {
+		allErrors[input] = map[string]interface{}{
 			rule: []string{
 				error,
 			},
 		}
 	} else {
-		if inputErrors, ok := errors[input].(map[string]interface{}); ok {
-			if _, exists_rule := inputErrors[rule]; !exists_rule {
-				inputErrors[rule] = []string{
+		if inputallErrors, ok := allErrors[input].(map[string]interface{}); ok {
+			if _, exists_rule := inputallErrors[rule]; !exists_rule {
+				inputallErrors[rule] = []string{
 					error,
 				}
 			} else {
-				inputErrors[rule] = append(inputErrors[rule].([]string), error)
+				inputallErrors[rule] = append(inputallErrors[rule].([]string), error)
 			}
-			errors[input] = inputErrors
+			allErrors[input] = inputallErrors
 		} else {
-			errors[input] = map[string]interface{}{
+			allErrors[input] = map[string]interface{}{
 				rule: []string{
 					error,
 				},
@@ -137,5 +293,5 @@ func addError(input string, rule string, errors map[string]interface{}, error st
 		}
 	}
 
-	return errors
+	return allErrors
 }

@@ -5,9 +5,7 @@ import (
 	"time"
 )
 
-func Date(input string, payload map[string]interface{}, options []string, errors map[string]interface{}, addError func(string, string, map[string]interface{}, string) map[string]interface{}, customeErrors map[string]string) map[string]interface{} {
-	value := payload[input]
-
+func Date(input string, value any, payload map[string]any, options []string, sliceIndex string, errors map[string]interface{}, addError func(string, string, map[string]interface{}, string) map[string]interface{}, customeErrors map[string]string) map[string]interface{} {
 	if value == nil || value == "" {
 		return errors
 	}
@@ -20,6 +18,11 @@ func Date(input string, payload map[string]interface{}, options []string, errors
 	_, exists := payload[input].(string)
 	if !exists {
 		tmpError := fmt.Sprintf("El campo \"%s\" debe ser una fecha válida con el formato \"%s\"", input, layout)
+
+		if sliceIndex != "" {
+			tmpError = fmt.Sprintf("El campo \"%s\" en la posición %s debe ser una fecha válida con el formato \"%s\"", input, sliceIndex, layout)
+		}
+
 		tmpErrorKey := fmt.Sprintf("%s.date", input)
 		if customeError, exists := customeErrors[tmpErrorKey]; exists {
 			tmpError = customeError
@@ -30,6 +33,11 @@ func Date(input string, payload map[string]interface{}, options []string, errors
 
 	if _, err := time.Parse(layout, value.(string)); err != nil {
 		tmpError := fmt.Sprintf("El campo \"%s\" debe ser una fecha válida con el formato \"%s\"", input, layout)
+
+		if sliceIndex != "" {
+			tmpError = fmt.Sprintf("El campo \"%s\" en la posición %s debe ser una fecha válida con el formato \"%s\"", input, sliceIndex, layout)
+		}
+
 		tmpErrorKey := fmt.Sprintf("%s.date", input)
 		if customeError, exists := customeErrors[tmpErrorKey]; exists {
 			tmpError = customeError

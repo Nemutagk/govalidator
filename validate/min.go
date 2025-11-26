@@ -6,12 +6,15 @@ import (
 	"strconv"
 )
 
-func Min(input string, payload map[string]interface{}, options []string, errors map[string]interface{}, addError func(string, string, map[string]interface{}, string) map[string]interface{}, customeErrors map[string]string) map[string]interface{} {
-	value := payload[input]
-
+func Min(input string, value any, payload map[string]any, options []string, sliceIndex string, errors map[string]interface{}, addError func(string, string, map[string]interface{}, string) map[string]interface{}, customeErrors map[string]string) map[string]interface{} {
 	min, err := strconv.ParseInt(options[0], 10, 64)
 	if err != nil {
 		tmpError := fmt.Sprintf("El campo %s debe ser un número", input)
+
+		if sliceIndex != "" {
+			tmpError = fmt.Sprintf("El campo %s en la posición %s debe ser un número", input, sliceIndex)
+		}
+
 		tmpErrorKey := fmt.Sprintf("%s.min", input)
 		if customeError, exists := customeErrors[tmpErrorKey]; exists {
 			tmpError = customeError
@@ -25,6 +28,11 @@ func Min(input string, payload map[string]interface{}, options []string, errors 
 
 		if strlen < int(min) {
 			tmpError := fmt.Sprintf("El campo %s debe tener al menos %s caracteres", input, options[0])
+
+			if sliceIndex != "" {
+				tmpError = fmt.Sprintf("El campo %s en la posición %s debe tener al menos %s caracteres", input, sliceIndex, options[0])
+			}
+
 			tmpErrorKey := fmt.Sprintf("%s.min", input)
 			if customeError, exists := customeErrors[tmpErrorKey]; exists {
 				tmpError = customeError
@@ -37,6 +45,11 @@ func Min(input string, payload map[string]interface{}, options []string, errors 
 		intValue := value.(int)
 		if intValue < int(min) {
 			tmpError := fmt.Sprintf("El campo %s debe ser al menos %s", input, options[0])
+
+			if sliceIndex != "" {
+				tmpError = fmt.Sprintf("El campo %s en la posición %s debe ser al menos %s", input, sliceIndex, options[0])
+			}
+
 			tmpErrorKey := fmt.Sprintf("%s.min", input)
 			if customeError, exists := customeErrors[tmpErrorKey]; exists {
 				tmpError = customeError
@@ -49,6 +62,11 @@ func Min(input string, payload map[string]interface{}, options []string, errors 
 		floatValue := value.(float64)
 		if floatValue < float64(min) {
 			tmpError := fmt.Sprintf("El campo %s debe ser al menos %s", input, options[0])
+
+			if sliceIndex != "" {
+				tmpError = fmt.Sprintf("El campo %s en la posición %s debe ser al menos %s", input, sliceIndex, options[0])
+			}
+
 			tmpErrorKey := fmt.Sprintf("%s.min", input)
 			if customeError, exists := customeErrors[tmpErrorKey]; exists {
 				tmpError = customeError
@@ -62,6 +80,11 @@ func Min(input string, payload map[string]interface{}, options []string, errors 
 	if kind == reflect.Slice || kind == reflect.Array {
 		if val.Len() < int(min) {
 			tmpError := fmt.Sprintf("El campo %s debe tener al menos %s elementos", input, options[0])
+
+			if sliceIndex != "" {
+				tmpError = fmt.Sprintf("El campo %s en la posición %s debe tener al menos %s elementos", input, sliceIndex, options[0])
+			}
+
 			tmpErrorKey := fmt.Sprintf("%s.min", input)
 			if customeError, exists := customeErrors[tmpErrorKey]; exists {
 				tmpError = customeError

@@ -6,13 +6,11 @@ import (
 	"time"
 )
 
-func After(input string, payload map[string]interface{}, options []string, errors map[string]interface{}, addError func(string, string, map[string]interface{}, string) map[string]interface{}, customeErrors map[string]string) map[string]interface{} {
+func After(input string, value any, payload map[string]any, options []string, sliceIndex string, errors map[string]interface{}, addError func(string, string, map[string]interface{}, string) map[string]interface{}, customeErrors map[string]string) map[string]interface{} {
 	if len(options) == 0 {
 		errors = addError(input, "after", errors, "El valor a comprar no esta definido")
 		return errors
 	}
-
-	value := payload[input]
 
 	if value == nil || value == "" {
 		return errors
@@ -21,11 +19,19 @@ func After(input string, payload map[string]interface{}, options []string, error
 	num, ok := value.(int)
 	if ok {
 		if len(options) == 0 {
-			errors = addError(input, "after", errors, "El valor a comparar no está definido")
+			if sliceIndex != "" {
+				input = fmt.Sprintf("%s[%s]", input, sliceIndex)
+			} else {
+				errors = addError(input, "after", errors, "El valor a comparar no está definido")
+			}
 		} else {
 			compare_int, _ := strconv.Atoi(options[0])
 			if num < compare_int {
 				tmpError := "La entrada " + input + " no es posterior al número " + options[0]
+
+				if sliceIndex != "" {
+					tmpError = fmt.Sprintf("La entrada en la posición %s no es posterior al número %s", sliceIndex, options[0])
+				}
 
 				customeErrorKey := fmt.Sprintf("%s.after", input)
 				if customeError, exists := customeErrors[customeErrorKey]; exists {

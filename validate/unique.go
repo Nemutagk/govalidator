@@ -9,7 +9,7 @@ import (
 * Params: db connection, table name, column name
 * Example: unique:princial,users,email
  */
-func Unique(input string, payload map[string]interface{}, options []string, list_errors map[string]interface{}, addError func(string, string, map[string]interface{}, string) map[string]interface{}, listModels map[string]func(data string, payload map[string]any) bool, customeErrors map[string]string) map[string]interface{} {
+func Unique(input string, value any, payload map[string]any, options []string, sliceIndex string, list_errors map[string]interface{}, addError func(string, string, map[string]interface{}, string) map[string]interface{}, listModels map[string]func(data string, payload map[string]any) bool, customeErrors map[string]string) map[string]interface{} {
 	if len(options) != 1 {
 		list_errors = addError(input, "unique", list_errors, "the options is not valid")
 		return list_errors
@@ -21,26 +21,38 @@ func Unique(input string, payload map[string]interface{}, options []string, list
 	}
 
 	if listModels == nil {
-		list_errors = addError(input, "unique", list_errors, "the model is not defined")
+		if sliceIndex != "" {
+			list_errors = addError(input, "unique", list_errors, fmt.Sprintf("el valor en la posición %s no es válido", sliceIndex))
+		} else {
+			list_errors = addError(input, "unique", list_errors, "el valor no es válido")
+		}
 		return list_errors
 	}
 
 	model, ok := listModels[options[0]]
 	if !ok || model == nil {
-		list_errors = addError(input, "unique", list_errors, "the model is not defined")
+		if sliceIndex != "" {
+			list_errors = addError(input, "unique", list_errors, fmt.Sprintf("el valor en la posición %s no es válido", sliceIndex))
+		} else {
+			list_errors = addError(input, "unique", list_errors, "el valor no es válido")
+		}
 		return list_errors
 	}
 
-	value, ok := payload[input].(string)
+	valueStr, ok := value.(string)
 	if !ok {
-		list_errors = addError(input, "unique", list_errors, "el valor no es válido")
+		if sliceIndex != "" {
+			list_errors = addError(input, "unique", list_errors, fmt.Sprintf("el valor en la posición %s no es válido", sliceIndex))
+		} else {
+			list_errors = addError(input, "unique", list_errors, "el valor no es válido")
+		}
 		return list_errors
 	}
 
-	result := model(value, payload)
+	result := model(valueStr, payload)
 
 	if !result {
-		tmpError := "El valor '" + value + "' ya está registrado"
+		tmpError := "El valor '" + valueStr + "' ya está registrado"
 
 		customeErrorKey := fmt.Sprintf("%s.unique", input)
 		if customeError, exists := customeErrors[customeErrorKey]; exists {

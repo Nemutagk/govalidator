@@ -5,9 +5,14 @@ import (
 	"strings"
 )
 
-func RequiredWithoutAll(input string, payload map[string]interface{}, options []string, errors map[string]interface{}, addError func(string, string, map[string]interface{}, string) map[string]interface{}, customeErrors map[string]string) map[string]interface{} {
+func RequiredWithoutAll(input string, value any, payload map[string]any, options []string, sliceIndex string, errors map[string]interface{}, addError func(string, string, map[string]interface{}, string) map[string]interface{}, customeErrors map[string]string) map[string]interface{} {
 	if len(options) != 1 {
 		tmpError := "La opción no está definida"
+
+		if sliceIndex != "" {
+			tmpError = fmt.Sprintf("La opción en la posición %s no está definida", sliceIndex)
+		}
+
 		tmpErrorKey := fmt.Sprintf("%s.required_without_all", input)
 		if customeError, exists := customeErrors[tmpErrorKey]; exists {
 			tmpError = customeError
@@ -28,6 +33,11 @@ func RequiredWithoutAll(input string, payload map[string]interface{}, options []
 	if _, exists_input := payload[input]; !exists_input && !not_defined {
 		all_inputs := strings.Join(options, ", ")
 		tmpError := fmt.Sprintf("El campo \"%s\" debe estar definido cuando los campos \"%s\" no están definidos", input, all_inputs)
+
+		if sliceIndex != "" {
+			tmpError = fmt.Sprintf("El campo \"%s\" en la posición %s debe estar definido cuando los campos \"%s\" no están definidos", input, sliceIndex, all_inputs)
+		}
+
 		tmpErrorKey := fmt.Sprintf("%s.required_without_all", input)
 		if customeError, exists := customeErrors[tmpErrorKey]; exists {
 			tmpError = customeError
