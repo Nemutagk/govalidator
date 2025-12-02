@@ -36,6 +36,28 @@ func ValidateRequest(body map[string]any, inputs []Input, customeallErrors map[s
 		return nil, gerr
 	}
 
+	for k := range safePayload {
+		if k == "" {
+			// log.Printf("el campo tiene nombre vacío, se elimina del payload seguro")
+			delete(safePayload, k)
+			continue
+		}
+
+		val, exists := body[k]
+		if !exists {
+			// log.Printf("el campo %s no existe en el payload original", k)
+			delete(safePayload, k)
+			continue
+		} else {
+			if val == nil && (!existsRule(inputs, k, "sometimes") && !existsRule(inputs, k, "nullable")) {
+				// log.Printf("el campo %s es nil y no tiene la regla sometimes o nullable", k)
+				delete(safePayload, k)
+				continue
+			}
+		}
+		// log.Printf("el campo %s existe en el payload original", k)
+	}
+
 	return safePayload, nil
 }
 
@@ -117,6 +139,7 @@ func rangeInputs(body map[string]any, inputs []Input, customeallErrors map[strin
 			}
 
 			tmpPayload, tmpErrors, tmpSometimes := applyRules(inputName, input, value, body, customeallErrors, models, sliceIndexStr)
+
 			safePayload[input.Name] = tmpPayload
 			for k, v := range tmpErrors {
 				allErrors[k] = v
@@ -268,7 +291,8 @@ func applyRules(inputName any, input Input, value any, body map[string]any, cust
 			allErrors = validate.DateFormat(inputNameStr, value, body, opts, sliceIndex, allErrors, addError, customeallErrors)
 		case "custome":
 			allErrors = validate.Custome(inputNameStr, value, body, opts, sliceIndex, allErrors, addError, models, customeallErrors)
-
+		case "nullable":
+			allErrors = validate.Nullable(inputNameStr, value, body, opts, sliceIndex, allErrors, addError, customeallErrors)
 		default:
 			allErrors = addError(inputNameStr, rule.Name, allErrors, "The rule "+rule.Name+" is not valid")
 		}
@@ -308,4 +332,17 @@ func addError(input string, rule string, allErrors map[string]interface{}, error
 	}
 
 	return allErrors
+}
+
+func existsRule(inputs []Input, inputName, rule string) bool {
+	for _, inp := range inputs {
+		if inp.Name == inputName {
+			for _, r := range inp.Rules {
+				if r.Name == rule {
+					return true
+				}
+			}
+		}
+	}
+	return false
 }
