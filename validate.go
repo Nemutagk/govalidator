@@ -293,6 +293,10 @@ func applyRules(inputName any, input Input, value any, body map[string]any, cust
 			allErrors = validate.Custome(inputNameStr, value, body, opts, sliceIndex, allErrors, addError, models, customeallErrors)
 		case "nullable":
 			allErrors = validate.Nullable(inputNameStr, value, body, opts, sliceIndex, allErrors, addError, customeallErrors)
+		case "equal":
+			allErrors = validate.Equal(inputNameStr, value, body, opts, sliceIndex, allErrors, addError, customeallErrors)
+		case "not_equal":
+			allErrors = validate.NotEqual(inputNameStr, value, body, opts, sliceIndex, allErrors, addError, customeallErrors)
 		default:
 			allErrors = addError(inputNameStr, rule.Name, allErrors, "The rule "+rule.Name+" is not valid")
 		}
