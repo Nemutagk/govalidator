@@ -19,7 +19,7 @@ type Rule struct {
 	Options []string
 }
 
-func ValidateRequest(body map[string]any, inputs []Input, customeallErrors map[string]string, models map[string]func(data string, payload map[string]any) bool) (map[string]any, *goerrors.GError) {
+func ValidateRequest(body map[string]any, inputs []Input, customeallErrors map[string]string, models map[string]func(data string, payload map[string]any, opts *[]string) bool) (map[string]any, *goerrors.GError) {
 	safePayload, currentallErrors, _ := rangeInputs(body, inputs, customeallErrors, models, "")
 
 	allErrors := make([]string, 0)
@@ -61,7 +61,7 @@ func ValidateRequest(body map[string]any, inputs []Input, customeallErrors map[s
 	return safePayload, nil
 }
 
-func rangeInputs(body map[string]any, inputs []Input, customeallErrors map[string]string, models map[string]func(data string, payload map[string]any) bool, sliceIndex string) (map[string]any, map[string]any, map[string]bool) {
+func rangeInputs(body map[string]any, inputs []Input, customeallErrors map[string]string, models map[string]func(data string, payload map[string]any, opts *[]string) bool, sliceIndex string) (map[string]any, map[string]any, map[string]bool) {
 	// log.Printf("====================> Starting rangeInputs ====================")
 	safePayload := make(map[string]any)
 	allErrors := make(map[string]any)
@@ -162,7 +162,7 @@ func rangeInputs(body map[string]any, inputs []Input, customeallErrors map[strin
 	return safePayload, allErrors, includesSometimesRule
 }
 
-func rangeArrayInput(body []any, fullBody map[string]any, inputs Input, customeallErrors map[string]string, models map[string]func(data string, payload map[string]any) bool, sliceIndex string) ([]any, map[string]any, map[string]bool) {
+func rangeArrayInput(body []any, fullBody map[string]any, inputs Input, customeallErrors map[string]string, models map[string]func(data string, payload map[string]any, opts *[]string) bool, sliceIndex string) ([]any, map[string]any, map[string]bool) {
 	// log.Printf("====================> Starting rangeArrayInput ====================")
 	safePayload := []any{}
 	allErrors := make(map[string]any)
@@ -215,7 +215,7 @@ func rangeArrayInput(body []any, fullBody map[string]any, inputs Input, customea
 	return safePayload, allErrors, includesSometimesRule
 }
 
-func applyRules(inputName any, input Input, value any, body map[string]any, customeallErrors map[string]string, models map[string]func(data string, payload map[string]any) bool, sliceIndex string) (any, map[string]any, map[string]bool) {
+func applyRules(inputName any, input Input, value any, body map[string]any, customeallErrors map[string]string, models map[string]func(data string, payload map[string]any, opts *[]string) bool, sliceIndex string) (any, map[string]any, map[string]bool) {
 	// log.Printf("====================> Starting applyRules for input ====================")
 	// log.Printf("Input Name: %v", inputName)
 	// log.Printf("Input Value: %+v", value)

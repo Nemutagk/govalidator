@@ -2,7 +2,7 @@ package validate
 
 import "fmt"
 
-func Custome(input string, value any, payload map[string]any, options []string, sliceIndex string, list_errors map[string]interface{}, addError func(string, string, map[string]interface{}, string) map[string]interface{}, listModels map[string]func(data string, payload map[string]any) bool, customeErrors map[string]string) map[string]interface{} {
+func Custome(input string, value any, payload map[string]any, options []string, sliceIndex string, list_errors map[string]interface{}, addError func(string, string, map[string]interface{}, string) map[string]interface{}, listModels map[string]func(data string, payload map[string]any, opts *[]string) bool, customeErrors map[string]string) map[string]interface{} {
 	if len(options) == 0 {
 		if sliceIndex != "" {
 			list_errors = addError(input, "custome", list_errors, fmt.Sprintf("La función de validación personalizada en la posición %s no está definida", sliceIndex))
@@ -22,7 +22,8 @@ func Custome(input string, value any, payload map[string]any, options []string, 
 		return list_errors
 	}
 
-	result := customeFunc(value.(string), payload)
+	lastOpts := options[1:]
+	result := customeFunc(value.(string), payload, &lastOpts)
 
 	if !result {
 		tmpError := "La validación personalizada ha fallado"
