@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-func RequiredWithoutAll(input string, value any, payload map[string]any, options []string, sliceIndex string, errors map[string]interface{}, addError func(string, string, map[string]interface{}, string) map[string]interface{}, customeErrors map[string]string) map[string]interface{} {
+func RequiredWithoutAll(input string, value any, payload map[string]any, options []string, sliceIndex string, errors map[string]interface{}, addError func(string, string, map[string]interface{}, string) map[string]interface{}, customeErrors map[string]string) (map[string]interface{}, bool) {
 	if len(options) != 1 {
 		tmpError := "La opción no está definida"
 
@@ -17,7 +17,7 @@ func RequiredWithoutAll(input string, value any, payload map[string]any, options
 		if customeError, exists := customeErrors[tmpErrorKey]; exists {
 			tmpError = customeError
 		}
-		return addError(input, "required_without_all", errors, tmpError)
+		return addError(input, "required_without_all", errors, tmpError), true
 	}
 
 	not_defined := true
@@ -43,8 +43,8 @@ func RequiredWithoutAll(input string, value any, payload map[string]any, options
 			tmpError = customeError
 		}
 		errors = addError(input, "required_without_all", errors, tmpError)
-		return errors
+		return errors, true
 	}
 
-	return errors
+	return errors, false
 }

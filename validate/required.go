@@ -2,7 +2,7 @@ package validate
 
 import "fmt"
 
-func Required(input string, value any, payload map[string]any, options []string, sliceIndex string, errors map[string]interface{}, addError func(string, string, map[string]interface{}, string) map[string]interface{}, customeErrors map[string]string) map[string]interface{} {
+func Required(input string, value any, payload map[string]any, options []string, sliceIndex string, errors map[string]interface{}, addError func(string, string, map[string]interface{}, string) map[string]interface{}, customeErrors map[string]string) (map[string]interface{}, bool) {
 	if _, exists_input := payload[input]; !exists_input {
 		tmpError := fmt.Sprintf("El campo %s no está definido", input)
 
@@ -15,7 +15,7 @@ func Required(input string, value any, payload map[string]any, options []string,
 			tmpError = customeError
 		}
 		errors = addError(input, "required", errors, tmpError)
-		return errors
+		return errors, true
 	}
 
 	if payload[input] == "" || payload[input] == nil {
@@ -30,8 +30,8 @@ func Required(input string, value any, payload map[string]any, options []string,
 			tmpError = customeError
 		}
 		errors = addError(input, "required", errors, tmpError)
-		return errors
+		return errors, true
 	}
 
-	return errors
+	return errors, false
 }

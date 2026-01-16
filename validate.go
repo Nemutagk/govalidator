@@ -272,15 +272,41 @@ func applyRules(inputName any, input Input, value any, body map[string]any, cust
 				includesSometimesRule[inputNameStr] = true
 			}
 		case "required":
-			allErrors = validate.Required(inputNameStr, value, body, opts, sliceIndex, allErrors, addError, customeallErrors)
+			getError := false
+			allErrors, getError = validate.Required(inputNameStr, value, body, opts, sliceIndex, allErrors, addError, customeallErrors)
+
+			if getError {
+				skipRulesMap = true
+				includesSometimesRule[inputNameStr] = true
+			}
 		case "required_with":
-			allErrors = validate.RequiredWith(inputNameStr, value, body, opts, sliceIndex, allErrors, addError, customeallErrors)
+			getError := false
+			allErrors, getError = validate.RequiredWith(inputNameStr, value, body, opts, sliceIndex, allErrors, addError, customeallErrors)
+			if getError {
+				skipRulesMap = true
+				includesSometimesRule[inputNameStr] = true
+			}
 		case "required_with_all":
-			allErrors = validate.RequiredWithAll(inputNameStr, value, body, opts, sliceIndex, allErrors, addError, customeallErrors)
+			getError := false
+			allErrors, getError = validate.RequiredWithAll(inputNameStr, value, body, opts, sliceIndex, allErrors, addError, customeallErrors)
+			if getError {
+				skipRulesMap = true
+				includesSometimesRule[inputNameStr] = true
+			}
 		case "required_without":
-			allErrors = validate.RequiredWithout(inputNameStr, value, body, opts, sliceIndex, allErrors, addError, customeallErrors)
+			getError := false
+			allErrors, getError = validate.RequiredWithout(inputNameStr, value, body, opts, sliceIndex, allErrors, addError, customeallErrors)
+			if getError {
+				skipRulesMap = true
+				includesSometimesRule[inputNameStr] = true
+			}
 		case "required_without_all":
-			allErrors = validate.RequiredWithoutAll(inputNameStr, value, body, opts, sliceIndex, allErrors, addError, customeallErrors)
+			getError := false
+			allErrors, getError = validate.RequiredWithoutAll(inputNameStr, value, body, opts, sliceIndex, allErrors, addError, customeallErrors)
+			if getError {
+				skipRulesMap = true
+				includesSometimesRule[inputNameStr] = true
+			}
 		case "array":
 			allErrors = validate.Array(inputNameStr, value, body, opts, sliceIndex, allErrors, addError, customeallErrors)
 		case "type":

@@ -5,7 +5,7 @@ import (
 	"log"
 )
 
-func RequiredWith(input string, value any, payload map[string]any, options []string, sliceIndex string, errors map[string]interface{}, addError func(string, string, map[string]interface{}, string) map[string]interface{}, customeErrors map[string]string) map[string]interface{} {
+func RequiredWith(input string, value any, payload map[string]any, options []string, sliceIndex string, errors map[string]interface{}, addError func(string, string, map[string]interface{}, string) map[string]interface{}, customeErrors map[string]string) (map[string]interface{}, bool) {
 	if len(options) < 1 && len(options) > 2 {
 		tmpError := "La opción no esta definida"
 
@@ -17,13 +17,13 @@ func RequiredWith(input string, value any, payload map[string]any, options []str
 		if customeError, exists := customeErrors[tmpErrorKey]; exists {
 			tmpError = customeError
 		}
-		return addError(input, "required_with", errors, tmpError)
+		return addError(input, "required_with", errors, tmpError), true
 	}
 
 	existsWithValue, exists_input := payload[options[0]]
 	if !exists_input {
 		log.Printf("RequiredWith: El campo '%s' no existe en el payload", options[0])
-		return errors
+		return errors, true
 	}
 
 	if len(options) == 1 {
@@ -42,7 +42,7 @@ func RequiredWith(input string, value any, payload map[string]any, options []str
 			errors = addError(input, "required_with", errors, tmpError)
 		}
 
-		return errors
+		return errors, true
 	}
 
 	if len(options) == 2 && existsWithValue == options[1] {
@@ -61,8 +61,8 @@ func RequiredWith(input string, value any, payload map[string]any, options []str
 			errors = addError(input, "required_with", errors, tmpError)
 		}
 
-		return errors
+		return errors, true
 	}
 
-	return errors
+	return errors, false
 }
