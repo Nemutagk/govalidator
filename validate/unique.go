@@ -9,7 +9,7 @@ import (
 * Params: db connection, table name, column name
 * Example: unique:princial,users,email
  */
-func Unique(input string, value any, payload map[string]any, options []string, sliceIndex string, list_errors map[string]interface{}, addError func(string, string, map[string]interface{}, string) map[string]interface{}, listModels map[string]func(data string, payload map[string]any, opts *[]string) bool, customeErrors map[string]string) map[string]interface{} {
+func Unique(input string, value any, payload map[string]any, options []string, sliceIndex string, list_errors map[string]interface{}, addError func(string, string, map[string]interface{}, string) map[string]interface{}, listModels map[string]func(data any, payload map[string]any, opts *[]string) bool, customeErrors map[string]string) map[string]interface{} {
 	if len(options) != 1 {
 		list_errors = addError(input, "unique", list_errors, "the options is not valid")
 		return list_errors

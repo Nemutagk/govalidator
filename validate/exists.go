@@ -2,7 +2,7 @@ package validate
 
 import "fmt"
 
-func Exists(input string, value any, payload map[string]any, options []string, sliceIndex string, errors map[string]interface{}, addError func(string, string, map[string]interface{}, string) map[string]interface{}, modelList map[string]func(data string, payload map[string]any, opts *[]string) bool, customeErrors map[string]string) map[string]interface{} {
+func Exists(input string, value any, payload map[string]any, options []string, sliceIndex string, errors map[string]interface{}, addError func(string, string, map[string]interface{}, string) map[string]interface{}, modelList map[string]func(data any, payload map[string]any, opts *[]string) bool, customeErrors map[string]string) map[string]interface{} {
 	if len(options) != 1 {
 		tmpError := "la configuración de conexión no es válida"
 
