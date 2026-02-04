@@ -54,6 +54,31 @@ func After(input string, value any, payload map[string]any, options []string, sl
 		return errors
 	}
 
+	if len(options) > 0 {
+		if fecha_str, ok := payload[options[0]]; ok {
+			formato = "2006-01-02"
+			if len(options) >= 2 {
+				formato = options[1]
+			}
+			fecha_comparar, err_fecha := time.Parse(formato, fecha_str.(string))
+
+			if err_fecha != nil {
+				errors = addError(input, "after", errors, "La fecha de comparación no es válida o no coincide con el formato "+formato)
+				return errors
+			}
+			if !date.After(fecha_comparar) {
+				tmpError := "La fecha no es posterior a la fecha " + fecha_str.(string)
+				customeErrorKey := fmt.Sprintf("%s.after", input)
+				if customeError, exists := customeErrors[customeErrorKey]; exists {
+					tmpError = customeError
+				}
+
+				errors = addError(input, "after", errors, tmpError)
+			}
+			return errors
+		}
+	}
+
 	humanDays := map[string]string{
 		"now":       "now",
 		"current":   "now",
