@@ -332,27 +332,27 @@ func applyRules(inputName any, input Input, value any, body map[string]any, cust
 	return value, allErrors, includesSometimesRule
 }
 
-func addError(input string, rule string, allErrors map[string]interface{}, error string) map[string]interface{} {
+func addError(input string, rule string, allErrors map[string]interface{}, err string) map[string]interface{} {
 	if _, exists_input := allErrors[input]; !exists_input {
 		allErrors[input] = map[string]interface{}{
 			rule: []string{
-				error,
+				err,
 			},
 		}
 	} else {
 		if inputallErrors, ok := allErrors[input].(map[string]interface{}); ok {
 			if _, exists_rule := inputallErrors[rule]; !exists_rule {
 				inputallErrors[rule] = []string{
-					error,
+					err,
 				}
 			} else {
-				inputallErrors[rule] = append(inputallErrors[rule].([]string), error)
+				inputallErrors[rule] = append(inputallErrors[rule].([]string), err)
 			}
 			allErrors[input] = inputallErrors
 		} else {
 			allErrors[input] = map[string]interface{}{
 				rule: []string{
-					error,
+					err,
 				},
 			}
 		}
