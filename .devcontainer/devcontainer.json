@@ -10,7 +10,7 @@
 		"dockerfile": "./Dockerfile"
 	},
 	"mounts": [
-		"source=/Users/jcabrera/Documents/ServerPrivado/modulos-go,target=/opt/modules,type=bind,consistency=cached"
+		"source=/Users/josealbertocabrerabarrios/Documents/ServidorPrivado,target=/opt/modules,type=bind,consistency=cached"
 	],
 	"customizations": {
 		"vscode": {

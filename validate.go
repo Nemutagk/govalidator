@@ -1,6 +1,7 @@
 package govalidator
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -22,12 +23,12 @@ type Rule struct {
 func ValidateRequest(body map[string]any, inputs []Input, customeallErrors map[string]string, models map[string]func(data any, payload map[string]any, opts *[]string) bool) (map[string]any, *goerrors.GError) {
 	safePayload, currentallErrors, _ := rangeInputs(body, inputs, customeallErrors, models, "")
 
-	allErrors := make([]string, 0)
+	allErrors := make([]error, 0)
 	if len(currentallErrors) > 0 {
 		for input, inputallErrors := range currentallErrors {
 			for _, errMessages := range inputallErrors.(map[string]interface{}) {
 				for _, errMessage := range errMessages.([]string) {
-					allErrors = append(allErrors, input+": "+errMessage)
+					allErrors = append(allErrors, fmt.Errorf("%s: %s", input, errMessage))
 				}
 			}
 		}
@@ -94,9 +95,9 @@ func rangeInputs(body map[string]any, inputs []Input, customeallErrors map[strin
 			}
 		}
 
-		switch value.(type) {
+		switch value := value.(type) {
 		case map[string]any:
-			tmpPayload, tmpErrors, tmpSometimes := rangeInputs(value.(map[string]any), []Input{input}, customeallErrors, models, sliceIndex)
+			tmpPayload, tmpErrors, tmpSometimes := rangeInputs(value, []Input{input}, customeallErrors, models, sliceIndex)
 			for k, v := range tmpPayload {
 				safePayload[k] = v
 			}
@@ -111,16 +112,12 @@ func rangeInputs(body map[string]any, inputs []Input, customeallErrors map[strin
 			// log.Printf("inputName: %s", inputName)
 			sliceIndexStr := strconv.Itoa(index)
 			if inputName != input.Name {
-				tmpPayload, tmpErrors, tmpSometimes := rangeArrayInput(value.([]any), body, input, customeallErrors, models, sliceIndexStr)
+				tmpPayload, tmpErrors, tmpSometimes := rangeArrayInput(value, body, input, customeallErrors, models, sliceIndexStr)
 				if safePayload[inputName] == nil {
 					safePayload[inputName] = []any{}
 				}
 
-				valueSlice, err := value.([]any)
-				if !err {
-					valueSlice = []any{}
-				}
-
+				valueSlice := []any{}
 				for k, v := range tmpPayload {
 					if k < len(valueSlice) {
 						valueSlice[k] = v

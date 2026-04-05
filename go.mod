@@ -2,12 +2,11 @@ module github.com/Nemutagk/govalidator/v2
 
 go 1.25.0
 
-require (
-	github.com/Nemutagk/goerrors v1.2.2
-	github.com/gofrs/uuid v4.4.0+incompatible
-)
+require github.com/Nemutagk/goerrors v1.3.2
 
-require github.com/Nemutagk/godb/v2 v2.0.0
+require github.com/google/uuid v1.6.0
+
+// require github.com/Nemutagk/godb/v2 v2.0.0
 
 // replace github.com/Nemutagk/godb/v2 => /opt/modules/db
 

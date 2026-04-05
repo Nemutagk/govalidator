@@ -4,11 +4,16 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/gofrs/uuid"
+	"github.com/google/uuid"
 )
 
 func GenerateUuid() string {
-	return uuid.Must(uuid.NewV7()).String()
+	buil, err := uuid.NewV7()
+	if err != nil {
+		return ""
+	}
+
+	return buil.String()
 }
 
 func PrettyPrint(data any) {
