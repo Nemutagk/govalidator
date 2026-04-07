@@ -312,8 +312,8 @@ func applyRules(inputName any, input Input, value any, body map[string]any, cust
 			allErrors = validate.Date(inputNameStr, value, body, opts, sliceIndex, allErrors, addError, customeallErrors)
 		case "date_format":
 			allErrors = validate.DateFormat(inputNameStr, value, body, opts, sliceIndex, allErrors, addError, customeallErrors)
-		case "custome":
-			allErrors = validate.Custome(inputNameStr, value, body, opts, sliceIndex, allErrors, addError, models, customeallErrors)
+		case "customized":
+			allErrors = validate.Customized(inputNameStr, value, body, opts, sliceIndex, allErrors, addError, models, customeallErrors)
 		case "nullable":
 			allErrors = validate.Nullable(inputNameStr, value, body, opts, sliceIndex, allErrors, addError, customeallErrors)
 		case "equal":
