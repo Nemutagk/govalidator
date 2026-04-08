@@ -99,7 +99,11 @@ func rangeInputs(body map[string]any, inputs []Input, customeallErrors map[strin
 		case map[string]any:
 			tmpPayload, tmpErrors, tmpSometimes := rangeInputs(value, []Input{input}, customeallErrors, models, sliceIndex)
 			for k, v := range tmpPayload {
-				safePayload[k] = v
+				if _, ok := safePayload[inputName]; !ok {
+					safePayload[inputName] = make(map[string]any)
+				}
+
+				safePayload[inputName].(map[string]any)[k] = v
 			}
 			for k, v := range tmpErrors {
 				allErrors[k] = v
