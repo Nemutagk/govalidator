@@ -21,7 +21,7 @@ type Rule struct {
 }
 
 func ValidateRequest(body map[string]any, inputs []Input, customeallErrors map[string]string, models map[string]func(data any, payload map[string]any, opts *[]string) bool) (map[string]any, *goerrors.GError) {
-	safePayload, currentallErrors, _ := rangeInputs(body, inputs, customeallErrors, models, "")
+	safePayload, currentallErrors, _ := rangeInputs(body, inputs, customeallErrors, models, "", "")
 
 	allErrors := make([]error, 0)
 	if len(currentallErrors) > 0 {
@@ -62,7 +62,7 @@ func ValidateRequest(body map[string]any, inputs []Input, customeallErrors map[s
 	return safePayload, nil
 }
 
-func rangeInputs(body map[string]any, inputs []Input, customeallErrors map[string]string, models map[string]func(data any, payload map[string]any, opts *[]string) bool, sliceIndex string) (map[string]any, map[string]any, map[string]bool) {
+func rangeInputs(body map[string]any, inputs []Input, customeallErrors map[string]string, models map[string]func(data any, payload map[string]any, opts *[]string) bool, sliceIndex string, pathPrefix string) (map[string]any, map[string]any, map[string]bool) {
 	// log.Printf("====================> Starting rangeInputs ====================")
 	safePayload := make(map[string]any)
 	allErrors := make(map[string]any)
@@ -97,14 +97,15 @@ func rangeInputs(body map[string]any, inputs []Input, customeallErrors map[strin
 
 		switch value := value.(type) {
 		case map[string]any:
-			tmpPayload, tmpErrors, tmpSometimes := rangeInputs(value, []Input{input}, customeallErrors, models, sliceIndex)
-			for k, v := range tmpPayload {
-				if _, ok := safePayload[inputName]; !ok {
-					safePayload[inputName] = make(map[string]any)
-				}
-
-				safePayload[inputName].(map[string]any)[k] = v
+			newPrefix := inputName
+			if pathPrefix != "" {
+				newPrefix = pathPrefix + "." + inputName
 			}
+			tmpPayload, tmpErrors, tmpSometimes := rangeInputs(value, []Input{input}, customeallErrors, models, sliceIndex, newPrefix)
+			if _, ok := safePayload[inputName]; !ok {
+				safePayload[inputName] = make(map[string]any)
+			}
+			deepMerge(safePayload[inputName].(map[string]any), tmpPayload)
 			for k, v := range tmpErrors {
 				allErrors[k] = v
 			}
@@ -143,19 +144,35 @@ func rangeInputs(body map[string]any, inputs []Input, customeallErrors map[strin
 
 			safePayload[input.Name] = tmpPayload
 			for k, v := range tmpErrors {
-				allErrors[k] = v
+				if pathPrefix != "" {
+					allErrors[pathPrefix+"."+k] = v
+				} else {
+					allErrors[k] = v
+				}
 			}
 			for k, v := range tmpSometimes {
-				includesSometimesRule[k] = v
+				if pathPrefix != "" {
+					includesSometimesRule[pathPrefix+"."+k] = v
+				} else {
+					includesSometimesRule[k] = v
+				}
 			}
 		default:
 			value, tmpErrors, tmpSometimes := applyRules(input.Name, input, value, body, customeallErrors, models, sliceIndex)
 			safePayload[input.Name] = value
 			for k, v := range tmpErrors {
-				allErrors[k] = v
+				if pathPrefix != "" {
+					allErrors[pathPrefix+"."+k] = v
+				} else {
+					allErrors[k] = v
+				}
 			}
 			for k, v := range tmpSometimes {
-				includesSometimesRule[k] = v
+				if pathPrefix != "" {
+					includesSometimesRule[pathPrefix+"."+k] = v
+				} else {
+					includesSometimesRule[k] = v
+				}
 			}
 		}
 	}
@@ -363,6 +380,20 @@ func addError(input string, rule string, allErrors map[string]interface{}, err s
 	}
 
 	return allErrors
+}
+
+func deepMerge(dst, src map[string]any) {
+	for k, v := range src {
+		if existing, ok := dst[k]; ok {
+			if existingMap, ok := existing.(map[string]any); ok {
+				if srcMap, ok := v.(map[string]any); ok {
+					deepMerge(existingMap, srcMap)
+					continue
+				}
+			}
+		}
+		dst[k] = v
+	}
 }
 
 func existsRule(inputs []Input, inputName, rule string) bool {
