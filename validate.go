@@ -1,6 +1,7 @@
 package govalidator
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -21,7 +22,7 @@ type Rule struct {
 }
 
 func ValidateRequest(body map[string]any, inputs []Input, customeallErrors map[string]string, models map[string]func(data any, payload map[string]any, opts *[]string) bool) (map[string]any, *goerrors.GError) {
-	safePayload, currentallErrors, _ := rangeInputs(body, inputs, customeallErrors, models, "", "")
+	safePayload, currentallErrors, _ := rangeInputs(body, inputs, customeallErrors, models, "", "", body)
 
 	allErrors := make([]error, 0)
 	if len(currentallErrors) > 0 {
@@ -62,7 +63,22 @@ func ValidateRequest(body map[string]any, inputs []Input, customeallErrors map[s
 	return safePayload, nil
 }
 
-func rangeInputs(body map[string]any, inputs []Input, customeallErrors map[string]string, models map[string]func(data any, payload map[string]any, opts *[]string) bool, sliceIndex string, pathPrefix string) (map[string]any, map[string]any, map[string]bool) {
+func ConvertPayload[T any](payload map[string]any) (T, error) {
+	var result T
+	payloadBytes, err := json.Marshal(payload)
+	if err != nil {
+		return result, err
+	}
+
+	err = json.Unmarshal(payloadBytes, &result)
+	if err != nil {
+		return result, err
+	}
+
+	return result, nil
+}
+
+func rangeInputs(body map[string]any, inputs []Input, customeallErrors map[string]string, models map[string]func(data any, payload map[string]any, opts *[]string) bool, sliceIndex string, pathPrefix string, rootBody map[string]any) (map[string]any, map[string]any, map[string]bool) {
 	// log.Printf("====================> Starting rangeInputs ====================")
 	safePayload := make(map[string]any)
 	allErrors := make(map[string]any)
@@ -101,7 +117,7 @@ func rangeInputs(body map[string]any, inputs []Input, customeallErrors map[strin
 			if pathPrefix != "" {
 				newPrefix = pathPrefix + "." + inputName
 			}
-			tmpPayload, tmpErrors, tmpSometimes := rangeInputs(value, []Input{input}, customeallErrors, models, sliceIndex, newPrefix)
+			tmpPayload, tmpErrors, tmpSometimes := rangeInputs(value, []Input{input}, customeallErrors, models, sliceIndex, newPrefix, rootBody)
 			if _, ok := safePayload[inputName]; !ok {
 				safePayload[inputName] = make(map[string]any)
 			}
@@ -117,7 +133,7 @@ func rangeInputs(body map[string]any, inputs []Input, customeallErrors map[strin
 			// log.Printf("inputName: %s", inputName)
 			sliceIndexStr := strconv.Itoa(index)
 			if inputName != input.Name {
-				tmpPayload, tmpErrors, tmpSometimes := rangeArrayInput(value, body, input, customeallErrors, models, sliceIndexStr)
+				tmpPayload, tmpErrors, tmpSometimes := rangeArrayInput(value, body, input, customeallErrors, models, sliceIndexStr, rootBody)
 				if safePayload[inputName] == nil {
 					safePayload[inputName] = []any{}
 				}
@@ -140,7 +156,7 @@ func rangeInputs(body map[string]any, inputs []Input, customeallErrors map[strin
 				continue
 			}
 
-			tmpPayload, tmpErrors, tmpSometimes := applyRules(inputName, input, value, body, customeallErrors, models, sliceIndexStr)
+			tmpPayload, tmpErrors, tmpSometimes := applyRules(inputName, input, value, body, customeallErrors, models, sliceIndexStr, rootBody)
 
 			safePayload[input.Name] = tmpPayload
 			for k, v := range tmpErrors {
@@ -158,20 +174,40 @@ func rangeInputs(body map[string]any, inputs []Input, customeallErrors map[strin
 				}
 			}
 		default:
-			value, tmpErrors, tmpSometimes := applyRules(input.Name, input, value, body, customeallErrors, models, sliceIndex)
-			safePayload[input.Name] = value
-			for k, v := range tmpErrors {
+			if inputName != input.Name {
+				newPrefix := inputName
 				if pathPrefix != "" {
-					allErrors[pathPrefix+"."+k] = v
-				} else {
+					newPrefix = pathPrefix + "." + inputName
+				}
+				tmpPayload, tmpErrors, tmpSometimes := rangeInputs(make(map[string]any), []Input{input}, customeallErrors, models, sliceIndex, newPrefix, rootBody)
+				if _, ok := safePayload[inputName]; !ok {
+					safePayload[inputName] = make(map[string]any)
+				}
+				if existing, ok := safePayload[inputName].(map[string]any); ok {
+					deepMerge(existing, tmpPayload)
+				}
+				for k, v := range tmpErrors {
 					allErrors[k] = v
 				}
-			}
-			for k, v := range tmpSometimes {
-				if pathPrefix != "" {
-					includesSometimesRule[pathPrefix+"."+k] = v
-				} else {
+				for k, v := range tmpSometimes {
 					includesSometimesRule[k] = v
+				}
+			} else {
+				value, tmpErrors, tmpSometimes := applyRules(input.Name, input, value, body, customeallErrors, models, sliceIndex, rootBody)
+				safePayload[input.Name] = value
+				for k, v := range tmpErrors {
+					if pathPrefix != "" {
+						allErrors[pathPrefix+"."+k] = v
+					} else {
+						allErrors[k] = v
+					}
+				}
+				for k, v := range tmpSometimes {
+					if pathPrefix != "" {
+						includesSometimesRule[pathPrefix+"."+k] = v
+					} else {
+						includesSometimesRule[k] = v
+					}
 				}
 			}
 		}
@@ -180,7 +216,7 @@ func rangeInputs(body map[string]any, inputs []Input, customeallErrors map[strin
 	return safePayload, allErrors, includesSometimesRule
 }
 
-func rangeArrayInput(body []any, fullBody map[string]any, inputs Input, customeallErrors map[string]string, models map[string]func(data any, payload map[string]any, opts *[]string) bool, sliceIndex string) ([]any, map[string]any, map[string]bool) {
+func rangeArrayInput(body []any, fullBody map[string]any, inputs Input, customeallErrors map[string]string, models map[string]func(data any, payload map[string]any, opts *[]string) bool, sliceIndex string, rootBody map[string]any) ([]any, map[string]any, map[string]bool) {
 	// log.Printf("====================> Starting rangeArrayInput ====================")
 	safePayload := []any{}
 	allErrors := make(map[string]any)
@@ -201,7 +237,7 @@ func rangeArrayInput(body []any, fullBody map[string]any, inputs Input, customea
 	for index, value := range body {
 		if inputName == "*" {
 			indexStr := strconv.Itoa(index)
-			value, tmpError, tmpSometimes := applyRules(inputs.Name, inputs, value, value.(map[string]any), customeallErrors, models, indexStr)
+			value, tmpError, tmpSometimes := applyRules(inputs.Name, inputs, value, value.(map[string]any), customeallErrors, models, indexStr, rootBody)
 			safePayload = append(safePayload, value)
 			for k, v := range tmpError {
 				allErrors[k] = v
@@ -218,7 +254,7 @@ func rangeArrayInput(body []any, fullBody map[string]any, inputs Input, customea
 
 			if indexInt == index {
 				indexStr := strconv.Itoa(index)
-				value, tmpError, tmpSometimes := applyRules(indexStr, inputs, value, value.(map[string]any), customeallErrors, models, indexStr)
+				value, tmpError, tmpSometimes := applyRules(indexStr, inputs, value, value.(map[string]any), customeallErrors, models, indexStr, rootBody)
 				safePayload = append(safePayload, value)
 				for k, v := range tmpError {
 					allErrors[k] = v
@@ -233,7 +269,7 @@ func rangeArrayInput(body []any, fullBody map[string]any, inputs Input, customea
 	return safePayload, allErrors, includesSometimesRule
 }
 
-func applyRules(inputName any, input Input, value any, body map[string]any, customeallErrors map[string]string, models map[string]func(data any, payload map[string]any, opts *[]string) bool, sliceIndex string) (any, map[string]any, map[string]bool) {
+func applyRules(inputName any, input Input, value any, body map[string]any, customeallErrors map[string]string, models map[string]func(data any, payload map[string]any, opts *[]string) bool, sliceIndex string, rootBody map[string]any) (any, map[string]any, map[string]bool) {
 	// log.Printf("====================> Starting applyRules for input ====================")
 	// log.Printf("Input Name: %v", inputName)
 	// log.Printf("Input Value: %+v", value)
@@ -341,6 +377,8 @@ func applyRules(inputName any, input Input, value any, body map[string]any, cust
 			allErrors = validate.Equal(inputNameStr, value, body, opts, sliceIndex, allErrors, addError, customeallErrors)
 		case "not_equal":
 			allErrors = validate.NotEqual(inputNameStr, value, body, opts, sliceIndex, allErrors, addError, customeallErrors)
+		case "required_if":
+			allErrors = validate.RequiredIf(inputNameStr, value, rootBody, opts, sliceIndex, allErrors, addError, customeallErrors)
 		default:
 			allErrors = addError(inputNameStr, rule.Name, allErrors, "The rule "+rule.Name+" is not valid")
 		}
