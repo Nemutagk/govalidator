@@ -2,8 +2,6 @@ module github.com/Nemutagk/govalidator/v2
 
 go 1.25.0
 
-require github.com/Nemutagk/goerrors v1.3.3
-
 require github.com/google/uuid v1.6.0
 
 // require github.com/Nemutagk/godb/v2 v2.0.0

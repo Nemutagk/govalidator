@@ -6,7 +6,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Nemutagk/goerrors"
 	"github.com/Nemutagk/govalidator/v2/validate"
 )
 
@@ -21,21 +20,28 @@ type Rule struct {
 	Options []string
 }
 
-func ValidateRequest(body map[string]any, inputs []Input, customeallErrors map[string]string, models map[string]func(data any, payload map[string]any, opts *[]string) bool) (map[string]any, *goerrors.GError) {
+type ValidationError struct {
+	FieldErrors []string
+}
+
+func (u ValidationError) Error() string {
+	return "Se encontraron errores en la validación"
+}
+
+func ValidateRequest(body map[string]any, inputs []Input, customeallErrors map[string]string, models map[string]func(data any, payload map[string]any, opts *[]string) bool) (map[string]any, error) {
 	safePayload, currentallErrors, _ := rangeInputs(body, inputs, customeallErrors, models, "", "", body)
 
-	allErrors := make([]error, 0)
+	allErrors := make([]string, 0)
 	if len(currentallErrors) > 0 {
 		for input, inputallErrors := range currentallErrors {
 			for _, errMessages := range inputallErrors.(map[string]interface{}) {
 				for _, errMessage := range errMessages.([]string) {
-					allErrors = append(allErrors, fmt.Errorf("%s: %s", input, errMessage))
+					allErrors = append(allErrors, fmt.Sprintf("%s: %s", input, errMessage))
 				}
 			}
 		}
-		gerr := goerrors.NewGError("Error en la validación", goerrors.StatusBadRequest, &allErrors, nil)
 
-		return nil, gerr
+		return nil, ValidationError{FieldErrors: allErrors}
 	}
 
 	for k := range safePayload {

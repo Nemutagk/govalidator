@@ -1,6 +1,2 @@
-github.com/Nemutagk/goerrors v1.3.2 h1:+ono+rDO0fQ7hetAB1wthdKpPvgqRo+L9SMSOaj8SD0=
-github.com/Nemutagk/goerrors v1.3.2/go.mod h1:Q+SeEcw23yEFsstLkOBAt7Q4KrL+O4FBK91FgYy5k2g=
-github.com/Nemutagk/goerrors v1.3.3 h1:17Rf2DskpeCLifPpVq6GZSdZWVf9EmK3E3Ni0OwK6rc=
-github.com/Nemutagk/goerrors v1.3.3/go.mod h1:Q+SeEcw23yEFsstLkOBAt7Q4KrL+O4FBK91FgYy5k2g=
 github.com/google/uuid v1.6.0 h1:NIvaJDMOsjHA8n1jAhLSgzrAzy1Hgr+hNrb57e+94F0=
 github.com/google/uuid v1.6.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
