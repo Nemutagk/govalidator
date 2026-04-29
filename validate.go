@@ -28,7 +28,7 @@ func (u ValidationError) Error() string {
 	return "Se encontraron errores en la validación"
 }
 
-func ValidateRequest(body map[string]any, inputs []Input, customeallErrors map[string]string, models map[string]func(data any, payload map[string]any, opts *[]string) bool) (map[string]any, error) {
+func ValidateRequest(body map[string]any, inputs []Input, customeallErrors map[string]string, models map[string]func(data any, payload map[string]any, opts *[]string) (bool, string)) (map[string]any, error) {
 	safePayload, currentallErrors, _ := rangeInputs(body, inputs, customeallErrors, models, "", "", body)
 
 	allErrors := make([]string, 0)
@@ -84,7 +84,7 @@ func ConvertPayload[T any](payload map[string]any) (T, error) {
 	return result, nil
 }
 
-func rangeInputs(body map[string]any, inputs []Input, customeallErrors map[string]string, models map[string]func(data any, payload map[string]any, opts *[]string) bool, sliceIndex string, pathPrefix string, rootBody map[string]any) (map[string]any, map[string]any, map[string]bool) {
+func rangeInputs(body map[string]any, inputs []Input, customeallErrors map[string]string, models map[string]func(data any, payload map[string]any, opts *[]string) (bool, string), sliceIndex string, pathPrefix string, rootBody map[string]any) (map[string]any, map[string]any, map[string]bool) {
 	// log.Printf("====================> Starting rangeInputs ====================")
 	safePayload := make(map[string]any)
 	allErrors := make(map[string]any)
@@ -135,35 +135,99 @@ func rangeInputs(body map[string]any, inputs []Input, customeallErrors map[strin
 				includesSometimesRule[k] = v
 			}
 		case []any:
-			// log.Printf("Input %s is an array", input.Name)
-			// log.Printf("inputName: %s", inputName)
 			sliceIndexStr := strconv.Itoa(index)
 			if inputName != input.Name {
-				tmpPayload, tmpErrors, tmpSometimes := rangeArrayInput(value, body, input, customeallErrors, models, sliceIndexStr, rootBody)
-				if safePayload[inputName] == nil {
-					safePayload[inputName] = []any{}
-				}
+				remaining := input.Name
+				specificIndex := -1
 
-				valueSlice := []any{}
-				for k, v := range tmpPayload {
-					if k < len(valueSlice) {
-						valueSlice[k] = v
+				if strings.HasPrefix(remaining, "*.") {
+					remaining = remaining[2:]
+				} else if remaining == "*" {
+					remaining = ""
+				} else {
+					parts := strings.SplitN(remaining, ".", 2)
+					idx, err := strconv.Atoi(parts[0])
+					if err != nil {
+						continue
+					}
+					specificIndex = idx
+					if len(parts) == 2 {
+						remaining = parts[1]
 					} else {
-						valueSlice = append(valueSlice, v)
+						remaining = ""
 					}
 				}
 
-				for k, v := range tmpErrors {
-					allErrors[k] = v
+				arrayPrefix := inputName
+				if pathPrefix != "" {
+					arrayPrefix = pathPrefix + "." + inputName
 				}
-				for k, v := range tmpSometimes {
-					includesSometimesRule[k] = v
+
+				resultSlice := make([]any, 0, len(value))
+				for i, elem := range value {
+					if specificIndex >= 0 && i != specificIndex {
+						continue
+					}
+
+					elemPrefix := arrayPrefix + "." + strconv.Itoa(i)
+
+					if remaining == "" {
+						indexStr := strconv.Itoa(i)
+						syntheticBody := map[string]any{indexStr: elem}
+						_, tmpErrors, tmpSometimes := applyRules(indexStr, input, elem, syntheticBody, customeallErrors, models, indexStr, rootBody)
+						for k, v := range tmpErrors {
+							allErrors[arrayPrefix+"."+k] = v
+						}
+						for k, v := range tmpSometimes {
+							includesSometimesRule[arrayPrefix+"."+k] = v
+						}
+						resultSlice = append(resultSlice, elem)
+					} else {
+						var elemBody map[string]any
+						if m, ok := elem.(map[string]any); ok {
+							elemBody = m
+						} else {
+							elemBody = make(map[string]any)
+						}
+						elemInput := Input{Name: remaining, Rules: input.Rules, Parent: input.Parent}
+						tmpPayload, tmpErrors, tmpSometimes := rangeInputs(elemBody, []Input{elemInput}, customeallErrors, models, strconv.Itoa(i), elemPrefix, rootBody)
+						resultSlice = append(resultSlice, tmpPayload)
+						for k, v := range tmpErrors {
+							allErrors[k] = v
+						}
+						for k, v := range tmpSometimes {
+							includesSometimesRule[k] = v
+						}
+					}
+				}
+
+				mergeOffset := 0
+				if specificIndex >= 0 {
+					mergeOffset = specificIndex
+				}
+				if existing, ok := safePayload[inputName].([]any); ok {
+					for i, elem := range resultSlice {
+						targetI := i + mergeOffset
+						if targetI < len(existing) {
+							if existingMap, ok := existing[targetI].(map[string]any); ok {
+								if elemMap, ok := elem.(map[string]any); ok {
+									deepMerge(existingMap, elemMap)
+									continue
+								}
+							}
+							existing[targetI] = elem
+						} else {
+							existing = append(existing, elem)
+						}
+					}
+					safePayload[inputName] = existing
+				} else {
+					safePayload[inputName] = resultSlice
 				}
 				continue
 			}
 
 			tmpPayload, tmpErrors, tmpSometimes := applyRules(inputName, input, value, body, customeallErrors, models, sliceIndexStr, rootBody)
-
 			safePayload[input.Name] = tmpPayload
 			for k, v := range tmpErrors {
 				if pathPrefix != "" {
@@ -181,6 +245,9 @@ func rangeInputs(body map[string]any, inputs []Input, customeallErrors map[strin
 			}
 		default:
 			if inputName != input.Name {
+				if strings.HasPrefix(input.Name, "*.") || input.Name == "*" {
+					break
+				}
 				newPrefix := inputName
 				if pathPrefix != "" {
 					newPrefix = pathPrefix + "." + inputName
@@ -222,60 +289,7 @@ func rangeInputs(body map[string]any, inputs []Input, customeallErrors map[strin
 	return safePayload, allErrors, includesSometimesRule
 }
 
-func rangeArrayInput(body []any, fullBody map[string]any, inputs Input, customeallErrors map[string]string, models map[string]func(data any, payload map[string]any, opts *[]string) bool, sliceIndex string, rootBody map[string]any) ([]any, map[string]any, map[string]bool) {
-	// log.Printf("====================> Starting rangeArrayInput ====================")
-	safePayload := []any{}
-	allErrors := make(map[string]any)
-	includesSometimesRule := make(map[string]bool)
-
-	inputName := inputs.Name
-	if strings.Contains(inputName, ".") {
-		parts := strings.Split(inputName, ".")
-		inputName = parts[0]
-		inputs.Name = strings.Join(parts[1:], ".")
-
-		if inputs.Parent == "" {
-			inputs.Parent = inputName
-		}
-	}
-	// log.Printf("Processing array input: %s", inputName)
-
-	for index, value := range body {
-		if inputName == "*" {
-			indexStr := strconv.Itoa(index)
-			value, tmpError, tmpSometimes := applyRules(inputs.Name, inputs, value, value.(map[string]any), customeallErrors, models, indexStr, rootBody)
-			safePayload = append(safePayload, value)
-			for k, v := range tmpError {
-				allErrors[k] = v
-			}
-			for k, v := range tmpSometimes {
-				includesSometimesRule[k] = v
-			}
-		} else {
-			indexInt, err := strconv.Atoi(inputName)
-			if err != nil {
-				// log.Printf("Error converting index to int: %v", err)
-				continue
-			}
-
-			if indexInt == index {
-				indexStr := strconv.Itoa(index)
-				value, tmpError, tmpSometimes := applyRules(indexStr, inputs, value, value.(map[string]any), customeallErrors, models, indexStr, rootBody)
-				safePayload = append(safePayload, value)
-				for k, v := range tmpError {
-					allErrors[k] = v
-				}
-				for k, v := range tmpSometimes {
-					includesSometimesRule[k] = v
-				}
-			}
-		}
-	}
-
-	return safePayload, allErrors, includesSometimesRule
-}
-
-func applyRules(inputName any, input Input, value any, body map[string]any, customeallErrors map[string]string, models map[string]func(data any, payload map[string]any, opts *[]string) bool, sliceIndex string, rootBody map[string]any) (any, map[string]any, map[string]bool) {
+func applyRules(inputName any, input Input, value any, body map[string]any, customeallErrors map[string]string, models map[string]func(data any, payload map[string]any, opts *[]string) (bool, string), sliceIndex string, rootBody map[string]any) (any, map[string]any, map[string]bool) {
 	// log.Printf("====================> Starting applyRules for input ====================")
 	// log.Printf("Input Name: %v", inputName)
 	// log.Printf("Input Value: %+v", value)

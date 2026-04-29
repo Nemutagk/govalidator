@@ -2,7 +2,7 @@ package validate
 
 import "fmt"
 
-func Customized(input string, value any, payload map[string]any, options []string, sliceIndex string, list_errors map[string]interface{}, addError func(string, string, map[string]interface{}, string) map[string]interface{}, listModels map[string]func(data any, payload map[string]any, opts *[]string) bool, customizedErrors map[string]string) map[string]interface{} {
+func Customized(input string, value any, payload map[string]any, options []string, sliceIndex string, list_errors map[string]interface{}, addError func(string, string, map[string]interface{}, string) map[string]interface{}, listModels map[string]func(data any, payload map[string]any, opts *[]string) (bool, string), customizedErrors map[string]string) map[string]interface{} {
 	if len(options) == 0 {
 		if sliceIndex != "" {
 			list_errors = addError(input, "customized", list_errors, fmt.Sprintf("La función de validación personalizada en la posición %s no está definida", sliceIndex))
@@ -23,7 +23,7 @@ func Customized(input string, value any, payload map[string]any, options []strin
 	}
 
 	lastOpts := options[1:]
-	result := customizedFunc(value, payload, &lastOpts)
+	result, customErr := customizedFunc(value, payload, &lastOpts)
 
 	if !result {
 		tmpError := "La validación personalizada ha fallado"
@@ -35,6 +35,10 @@ func Customized(input string, value any, payload map[string]any, options []strin
 		customizedErrorKey := fmt.Sprintf("%s.customized", input)
 		if customizedError, exists := customizedErrors[customizedErrorKey]; exists {
 			tmpError = customizedError
+		}
+
+		if customErr != "" {
+			tmpError = customErr
 		}
 
 		list_errors = addError(input, "customized", list_errors, tmpError)

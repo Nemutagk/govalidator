@@ -2,6 +2,7 @@ package validate
 
 import (
 	"fmt"
+	"log"
 	"strconv"
 	"time"
 )
@@ -43,6 +44,7 @@ func Before(input string, value any, payload map[string]any, options []string, s
 
 	formato := "2006-01-02"
 	if len(options) >= 2 {
+		log.Printf("Formato personalizado detectado: %s", options[1])
 		formato = options[1]
 	}
 
@@ -88,6 +90,7 @@ func Before(input string, value any, payload map[string]any, options []string, s
 
 	if _, exists := humanDays[options[0]]; exists {
 		if options[0] == "now" || options[0] == "current" || options[0] == "today" {
+			log.Printf("se compara con now")
 			if !date.Before(time.Now()) {
 				tmpError := "La fecha no es anterior a la fecha actual"
 

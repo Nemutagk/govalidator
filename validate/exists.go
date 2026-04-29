@@ -2,7 +2,7 @@ package validate
 
 import "fmt"
 
-func Exists(input string, value any, payload map[string]any, options []string, sliceIndex string, errors map[string]interface{}, addError func(string, string, map[string]interface{}, string) map[string]interface{}, modelList map[string]func(data any, payload map[string]any, opts *[]string) bool, customeErrors map[string]string) map[string]interface{} {
+func Exists(input string, value any, payload map[string]any, options []string, sliceIndex string, errors map[string]interface{}, addError func(string, string, map[string]interface{}, string) map[string]interface{}, modelList map[string]func(data any, payload map[string]any, opts *[]string) (bool, string), customeErrors map[string]string) map[string]interface{} {
 	if len(options) != 1 {
 		tmpError := "la configuración de conexión no es válida"
 
@@ -51,7 +51,7 @@ func Exists(input string, value any, payload map[string]any, options []string, s
 	}
 
 	anotherOpts := options[1:]
-	result := model(valueStr, payload, &anotherOpts)
+	result, customErr := model(valueStr, payload, &anotherOpts)
 
 	if !result {
 		tmpError := fmt.Sprintf("El valor '%s' no existe", value)
@@ -64,6 +64,11 @@ func Exists(input string, value any, payload map[string]any, options []string, s
 		if customeError, exists := customeErrors[tmpErrorKey]; exists {
 			tmpError = customeError
 		}
+
+		if customErr != "" {
+			tmpError = customErr
+		}
+
 		errors = addError(input, "exists", errors, tmpError)
 	}
 
