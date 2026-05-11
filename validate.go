@@ -339,9 +339,9 @@ func applyRules(inputName any, input Input, value any, body map[string]any, cust
 		case "boolean":
 			allErrors = validate.Boolean(inputNameStr, value, body, opts, sliceIndex, allErrors, addError, customeallErrors)
 		case "sometimes":
-			if _, exists_input := body[inputNameStr]; !exists_input {
-				//Si no existe el input no se validan lás demás reglas existentes
-				// // // log.Println("Input", input, "no existe en el body, no se validan las demás reglas")
+			if v, exists_input := body[inputNameStr]; !exists_input || v == nil {
+				//Si no existe el input (o está presente pero nil, p.ej. *string nil en struct)
+				//no se validan las demás reglas existentes
 				skipRulesMap = true
 				includesSometimesRule[inputNameStr] = true
 			}
