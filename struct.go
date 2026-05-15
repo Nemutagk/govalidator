@@ -10,7 +10,9 @@ type StructOptions struct {
 	Tag string
 }
 
-func ValidateStruct(s any, inputs []Input, customeallErrors map[string]string, models map[string]func(data any, payload map[string]any, opts *[]string) (bool, string), opts ...StructOptions) (map[string]any, error) {
+func ValidateStruct[T any](s T, inputs []Input, customeallErrors map[string]string, models map[string]func(data any, payload map[string]any, opts *[]string) (bool, string), opts ...StructOptions) (T, error) {
+	var zero T
+
 	tag := "json"
 	if len(opts) > 0 && opts[0].Tag != "" {
 		tag = opts[0].Tag
@@ -18,10 +20,20 @@ func ValidateStruct(s any, inputs []Input, customeallErrors map[string]string, m
 
 	body, err := structToMap(s, tag)
 	if err != nil {
-		return nil, fmt.Errorf("error convirtiendo struct a map: %w", err)
+		return zero, fmt.Errorf("error convirtiendo struct a map: %w", err)
 	}
 
-	return ValidateRequest(body, inputs, customeallErrors, models)
+	safePayload, err := ValidateRequest(body, inputs, customeallErrors, models)
+	if err != nil {
+		return zero, err
+	}
+
+	result, err := ConvertPayload[T](safePayload)
+	if err != nil {
+		return zero, fmt.Errorf("error convirtiendo payload a struct: %w", err)
+	}
+
+	return result, nil
 }
 
 func structToMap(s any, tag string) (map[string]any, error) {
