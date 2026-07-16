@@ -11,7 +11,7 @@ func Date(input string, value any, payload map[string]any, options []string, sli
 	}
 
 	layout := "2006-01-02T15:04:05"
-	if len(options) > 1 && options[0] != "" {
+	if len(options) >= 1 && options[0] != "" {
 		layout = options[0]
 	}
 

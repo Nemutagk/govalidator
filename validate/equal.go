@@ -2,7 +2,6 @@ package validate
 
 import (
 	"fmt"
-	"log"
 )
 
 func Equal(input string, value any, payload map[string]any, options []string, sliceIndex string, errors map[string]interface{}, addError func(string, string, map[string]interface{}, string) map[string]interface{}, customeErrors map[string]string) map[string]interface{} {
@@ -23,7 +22,7 @@ func Equal(input string, value any, payload map[string]any, options []string, sl
 		return errors
 	}
 
-	log.Printf("======> Comparing value: %v with option: %v", value, options[0])
+	// log.Printf("======> Comparing value: %v with option: %v", value, options[0])
 	if value != options[0] {
 		tmpError := fmt.Sprintf("El valor no es igual a %v", options[0])
 

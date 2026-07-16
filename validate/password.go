@@ -86,7 +86,7 @@ func Password(input string, value any, payload map[string]any, options []string,
 		tmpError := "La contraseña debe contener al menos un carácter especial ($#%&/()!_-)"
 
 		if sliceIndex != "" {
-			tmpError = fmt.Sprintf("La contraseña en la posición %s debe contener al menos un carácter especial ($#%&/()!_-)", sliceIndex)
+			tmpError = fmt.Sprintf("La contraseña en la posición %s debe contener al menos un carácter especial ($#%%&/()!_-)", sliceIndex)
 		}
 
 		tmpErrorKey := fmt.Sprintf("%s.password", input)

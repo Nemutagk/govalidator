@@ -2,7 +2,6 @@ package validate
 
 import (
 	"fmt"
-	"log"
 )
 
 func RequiredWith(input string, value any, payload map[string]any, options []string, sliceIndex string, errors map[string]interface{}, addError func(string, string, map[string]interface{}, string) map[string]interface{}, customeErrors map[string]string) (map[string]interface{}, bool) {
@@ -22,7 +21,7 @@ func RequiredWith(input string, value any, payload map[string]any, options []str
 
 	existsWithValue, exists_input := payload[options[0]]
 	if !exists_input {
-		log.Printf("RequiredWith: El campo '%s' no existe en el payload", options[0])
+		// log.Printf("RequiredWith: El campo '%s' no existe en el payload", options[0])
 		return errors, true
 	}
 
