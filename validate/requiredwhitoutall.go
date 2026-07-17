@@ -3,6 +3,8 @@ package validate
 import (
 	"fmt"
 	"strings"
+
+	"github.com/Nemutagk/govalidator/v2/helper"
 )
 
 func RequiredWithoutAll(input string, value any, payload map[string]any, options []string, sliceIndex string, errors map[string]interface{}, addError func(string, string, map[string]interface{}, string) map[string]interface{}, customeErrors map[string]string) (map[string]interface{}, bool) {
@@ -22,7 +24,7 @@ func RequiredWithoutAll(input string, value any, payload map[string]any, options
 
 	not_defined := true
 	for _, another_input := range options {
-		if _, exists_another_input := payload[another_input]; !exists_another_input {
+		if validInput, exists_another_input := payload[another_input]; !exists_another_input || helper.IsEmpty(validInput) {
 			not_defined = false
 			break
 		}
@@ -32,10 +34,10 @@ func RequiredWithoutAll(input string, value any, payload map[string]any, options
 
 	if _, exists_input := payload[input]; !exists_input && !not_defined {
 		all_inputs := strings.Join(options, ", ")
-		tmpError := fmt.Sprintf("El campo \"%s\" debe estar definido cuando los campos \"%s\" no están definidos", input, all_inputs)
+		tmpError := fmt.Sprintf("El campo \"%s\" debe estar definido cuando los campos \"%s\" no están definidos o están vacíos", input, all_inputs)
 
 		if sliceIndex != "" {
-			tmpError = fmt.Sprintf("El campo \"%s\" en la posición %s debe estar definido cuando los campos \"%s\" no están definidos", input, sliceIndex, all_inputs)
+			tmpError = fmt.Sprintf("El campo \"%s\" en la posición %s debe estar definido cuando los campos \"%s\" no están definidos o están vacíos", input, sliceIndex, all_inputs)
 		}
 
 		tmpErrorKey := fmt.Sprintf("%s.required_without_all", input)

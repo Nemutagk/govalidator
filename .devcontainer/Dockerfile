@@ -7,7 +7,7 @@ RUN apt-get update && apt-get upgrade -y && \
     echo "vscode ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/vscode && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
-RUN go install golang.org/x/tools/gopls@latest
+RUN GOSUMDB=off go install golang.org/x/tools/gopls@v0.21.1
 
 WORKDIR /workspaces
 

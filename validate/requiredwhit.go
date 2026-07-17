@@ -2,6 +2,8 @@ package validate
 
 import (
 	"fmt"
+
+	"github.com/Nemutagk/govalidator/v2/helper"
 )
 
 func RequiredWith(input string, value any, payload map[string]any, options []string, sliceIndex string, errors map[string]interface{}, addError func(string, string, map[string]interface{}, string) map[string]interface{}, customeErrors map[string]string) (map[string]interface{}, bool) {
@@ -20,7 +22,7 @@ func RequiredWith(input string, value any, payload map[string]any, options []str
 	}
 
 	existsWithValue, exists_input := payload[options[0]]
-	if !exists_input {
+	if !exists_input || helper.IsEmpty(existsWithValue) {
 		// log.Printf("RequiredWith: El campo '%s' no existe en el payload", options[0])
 		return errors, true
 	}
