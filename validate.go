@@ -2,6 +2,7 @@ package govalidator
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -26,6 +27,12 @@ type ValidationError struct {
 
 func (u ValidationError) Error() string {
 	return "Se encontraron errores en la validación"
+}
+
+type ValidationErrorResponse struct {
+	Message string   `json:"message"`
+	Errors  []string `json:"field_errors"`
+	Summary string   `json:"summary"`
 }
 
 func ValidateRequest(body map[string]any, inputs []Input, customeallErrors map[string]string, models map[string]func(data any, payload map[string]any, opts *[]string) (bool, string)) (map[string]any, error) {
@@ -465,4 +472,19 @@ func existsRule(inputs []Input, inputName, rule string) bool {
 		}
 	}
 	return false
+}
+
+func AsValidationError(err error) (ValidationErrorResponse, bool) {
+	var ve ValidationError
+
+	if errors.As(err, &ve) {
+		summary := strings.Join(ve.FieldErrors, "; ")
+		return ValidationErrorResponse{
+			Message: ve.Error(),
+			Errors:  ve.FieldErrors,
+			Summary: summary,
+		}, true
+	}
+
+	return ValidationErrorResponse{}, false
 }
