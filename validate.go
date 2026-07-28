@@ -407,7 +407,7 @@ func applyRules(inputName any, input Input, value any, body map[string]any, cust
 		case "required_if":
 			allErrors = validate.RequiredIf(inputNameStr, value, rootBody, opts, sliceIndex, allErrors, addError, customeallErrors)
 		default:
-			allErrors = addError(inputNameStr, rule.Name, allErrors, "The rule "+rule.Name+" is not valid")
+			allErrors = addError(inputNameStr, rule.Name, allErrors, "La regla "+rule.Name+" no es válida")
 		}
 
 		if skipRulesMap {

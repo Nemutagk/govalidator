@@ -2,6 +2,7 @@ package govalidator
 
 import (
 	"fmt"
+	"log"
 	"reflect"
 	"strings"
 )
@@ -23,6 +24,7 @@ func ValidateStruct[T any](s T, inputs []Input, customeallErrors map[string]stri
 		return zero, fmt.Errorf("error convirtiendo struct a map: %w", err)
 	}
 
+	log.Printf("body: %+v", body)
 	safePayload, err := ValidateRequest(body, inputs, customeallErrors, models)
 	if err != nil {
 		return zero, err
@@ -63,8 +65,11 @@ func reflectStructToMap(v reflect.Value, tag string) (map[string]any, error) {
 			continue
 		}
 
-		key := fieldName(field, tag)
+		key, omitempty := fieldNameAndOpts(field, tag)
 		if key == "-" {
+			continue
+		}
+		if omitempty && isEmptyValue(fieldVal) {
 			continue
 		}
 
@@ -141,12 +146,31 @@ func reflectToAny(v reflect.Value, tag string) (any, error) {
 	}
 }
 
-func fieldName(field reflect.StructField, tag string) string {
-	if tagVal := field.Tag.Get(tag); tagVal != "" {
-		name, _, _ := strings.Cut(tagVal, ",")
-		if name != "" {
-			return name
+func fieldNameAndOpts(field reflect.StructField, tag string) (name string, omitempty bool) {
+	tagVal := field.Tag.Get(tag)
+	if tagVal == "" {
+		return field.Name, false
+	}
+	parts := strings.Split(tagVal, ",")
+	name = parts[0]
+	if name == "" {
+		name = field.Name
+	}
+	for _, opt := range parts[1:] {
+		if opt == "omitempty" {
+			omitempty = true
 		}
 	}
-	return field.Name
+	return name, omitempty
+}
+
+func isEmptyValue(v reflect.Value) bool {
+	switch v.Kind() {
+	case reflect.Ptr, reflect.Interface:
+		return v.IsNil()
+	case reflect.Slice, reflect.Map, reflect.Array:
+		return v.Len() == 0
+	default:
+		return v.IsZero()
+	}
 }
