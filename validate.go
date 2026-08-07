@@ -343,6 +343,14 @@ func applyRules(inputName any, input Input, value any, body map[string]any, cust
 			allErrors = validate.Min(inputNameStr, value, body, opts, sliceIndex, allErrors, addError, customeallErrors)
 		case "max":
 			allErrors = validate.Max(inputNameStr, value, body, opts, sliceIndex, allErrors, addError, customeallErrors)
+		case "greater_than":
+			allErrors = validate.GreaterThan(inputNameStr, value, body, opts, sliceIndex, allErrors, addError, customeallErrors)
+		case "greater_than_equal":
+			allErrors = validate.GreaterThanEqual(inputNameStr, value, body, opts, sliceIndex, allErrors, addError, customeallErrors)
+		case "less_than":
+			allErrors = validate.LessThan(inputNameStr, value, body, opts, sliceIndex, allErrors, addError, customeallErrors)
+		case "less_than_equal":
+			allErrors = validate.LessThanEqual(inputNameStr, value, body, opts, sliceIndex, allErrors, addError, customeallErrors)
 		case "boolean":
 			allErrors = validate.Boolean(inputNameStr, value, body, opts, sliceIndex, allErrors, addError, customeallErrors)
 		case "sometimes":

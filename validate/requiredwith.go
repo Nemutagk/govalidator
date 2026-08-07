@@ -7,7 +7,12 @@ import (
 )
 
 func RequiredWith(input string, value any, payload map[string]any, options []string, sliceIndex string, errors map[string]interface{}, addError func(string, string, map[string]interface{}, string) map[string]interface{}, customeErrors map[string]string) (map[string]interface{}, bool) {
-	if len(options) < 1 && len(options) > 2 {
+	inputMissing := func() bool {
+		val, ok := payload[input]
+		return !ok || helper.IsEmpty(val)
+	}
+
+	if len(options) < 1 || len(options) > 2 {
 		tmpError := "La opción no esta definida"
 
 		if sliceIndex != "" {
@@ -23,8 +28,9 @@ func RequiredWith(input string, value any, payload map[string]any, options []str
 
 	existsWithValue, exists_input := payload[options[0]]
 	if !exists_input || helper.IsEmpty(existsWithValue) {
-		// log.Printf("RequiredWith: El campo '%s' no existe en el payload", options[0])
-		return errors, true
+		// El campo de referencia no está definido, required_with no aplica.
+		// Solo se detiene el resto de reglas si el propio campo tampoco tiene valor.
+		return errors, inputMissing()
 	}
 
 	if len(options) == 1 {
@@ -39,11 +45,12 @@ func RequiredWith(input string, value any, payload map[string]any, options []str
 			tmpError = customeError
 		}
 
-		if val, ok := payload[input]; !ok || helper.IsEmpty(val) {
+		if inputMissing() {
 			errors = addError(input, "required_with", errors, tmpError)
+			return errors, true
 		}
 
-		return errors, true
+		return errors, false
 	}
 
 	if len(options) == 2 && existsWithValue == options[1] {
@@ -60,9 +67,10 @@ func RequiredWith(input string, value any, payload map[string]any, options []str
 
 		if val, ok := payload[input]; !ok || helper.IsEmpty(val) || val != options[1] {
 			errors = addError(input, "required_with", errors, tmpError)
+			return errors, inputMissing()
 		}
 
-		return errors, true
+		return errors, false
 	}
 
 	return errors, false
