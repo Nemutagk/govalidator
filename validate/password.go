@@ -22,7 +22,7 @@ func Password(input string, value any, payload map[string]any, options []string,
 		if customeError, exists := customeErrors[tmpErrorKey]; exists {
 			tmpError = customeError
 		}
-		errors = addError("password", "type", errors, tmpError)
+		errors = addError(input, "type", errors, tmpError)
 		return errors
 	}
 
@@ -37,7 +37,7 @@ func Password(input string, value any, payload map[string]any, options []string,
 		if customeError, exists := customeErrors[tmpErrorKey]; exists {
 			tmpError = customeError
 		}
-		errors = addError("password", "min:6", errors, tmpError)
+		errors = addError(input, "min:6", errors, tmpError)
 	}
 
 	if match, _ := regexp.MatchString("[0-9]", valueStr); !match {
@@ -51,7 +51,7 @@ func Password(input string, value any, payload map[string]any, options []string,
 		if customeError, exists := customeErrors[tmpErrorKey]; exists {
 			tmpError = customeError
 		}
-		errors = addError("password", "regex", errors, tmpError)
+		errors = addError(input, "regex", errors, tmpError)
 	}
 
 	if match, _ := regexp.MatchString("[a-z]", valueStr); !match {
@@ -65,7 +65,7 @@ func Password(input string, value any, payload map[string]any, options []string,
 		if customeError, exists := customeErrors[tmpErrorKey]; exists {
 			tmpError = customeError
 		}
-		errors = addError("password", "regex", errors, tmpError)
+		errors = addError(input, "regex", errors, tmpError)
 	}
 
 	if match, _ := regexp.MatchString("[A-Z]", valueStr); !match {
@@ -79,7 +79,7 @@ func Password(input string, value any, payload map[string]any, options []string,
 		if customeError, exists := customeErrors[tmpErrorKey]; exists {
 			tmpError = customeError
 		}
-		errors = addError("password", "regex", errors, tmpError)
+		errors = addError(input, "regex", errors, tmpError)
 	}
 
 	if match, _ := regexp.MatchString(`[#$%&/()!_-]+`, valueStr); !match {
@@ -93,7 +93,7 @@ func Password(input string, value any, payload map[string]any, options []string,
 		if customeError, exists := customeErrors[tmpErrorKey]; exists {
 			tmpError = customeError
 		}
-		errors = addError("password", "regex", errors, tmpError)
+		errors = addError(input, "regex", errors, tmpError)
 	}
 
 	return errors

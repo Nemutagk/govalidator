@@ -8,7 +8,7 @@ import (
 )
 
 func RequiredWithAll(input string, value any, payload map[string]any, options []string, sliceIndex string, errors map[string]interface{}, addError func(string, string, map[string]interface{}, string) map[string]interface{}, customeErrors map[string]string) (map[string]interface{}, bool) {
-	if len(options) != 1 {
+	if len(options) < 1 {
 		tmpError := "La opción no está definida"
 
 		if sliceIndex != "" {

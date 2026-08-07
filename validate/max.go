@@ -62,6 +62,11 @@ func Max(input string, value any, payload map[string]any, options []string, slic
 		floatValue := value.(float64)
 		if floatValue > float64(max) {
 			tmpError := fmt.Sprintf("El campo %s debe ser como máximo %s", input, options[0])
+
+			if sliceIndex != "" {
+				tmpError = fmt.Sprintf("El campo %s en la posición %s debe ser como máximo %s", input, sliceIndex, options[0])
+			}
+
 			tmpErrorKey := fmt.Sprintf("%s.max", input)
 			if customeError, exists := customeErrors[tmpErrorKey]; exists {
 				tmpError = customeError

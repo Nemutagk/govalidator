@@ -41,6 +41,8 @@ func After(input string, value any, payload map[string]any, options []string, sl
 				errors = addError(input, "after", errors, tmpError)
 			}
 		}
+
+		return errors
 	}
 
 	formato := "2006-01-02"
@@ -131,17 +133,20 @@ func After(input string, value any, payload map[string]any, options []string, sl
 	}
 
 	compare_date, err := time.Parse(formato, options[0])
-	if err == nil {
-		if !date.After(compare_date) {
-			tmpError := "La fecha no es posterior a la fecha " + options[0]
+	if err != nil {
+		errors = addError(input, "after", errors, "La fecha de comparación no es válida o no coincide con el formato "+formato)
+		return errors
+	}
 
-			customeErrorKey := fmt.Sprintf("%s.after", input)
-			if customeError, exists := customeErrors[customeErrorKey]; exists {
-				tmpError = customeError
-			}
+	if !date.After(compare_date) {
+		tmpError := "La fecha no es posterior a la fecha " + options[0]
 
-			errors = addError(input, "after", errors, tmpError)
+		customeErrorKey := fmt.Sprintf("%s.after", input)
+		if customeError, exists := customeErrors[customeErrorKey]; exists {
+			tmpError = customeError
 		}
+
+		errors = addError(input, "after", errors, tmpError)
 	}
 
 	return errors

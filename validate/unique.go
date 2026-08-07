@@ -16,7 +16,6 @@ func Unique(input string, value any, payload map[string]any, options []string, s
 	}
 
 	if _, exists_input := payload[input]; !exists_input {
-		fmt.Println("validate unique:input not exists")
 		return list_errors
 	}
 

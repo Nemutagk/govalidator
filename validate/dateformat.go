@@ -17,7 +17,24 @@ func DateFormat(input string, value any, payload map[string]any, options []strin
 
 	formato := options[0]
 
-	_, err_date := time.Parse(formato, value.(string))
+	valueStr, ok := value.(string)
+	if !ok {
+		tmpError := fmt.Sprintf("El campo \"%s\" debe ser una fecha válida con el formato \"%s\"", input, formato)
+
+		if sliceIndex != "" {
+			tmpError = fmt.Sprintf("El campo \"%s\" en la posición %s debe ser una fecha válida con el formato \"%s\"", input, sliceIndex, formato)
+		}
+
+		customeErrorKey := fmt.Sprintf("%s.date_format", input)
+		if customeError, exists := customeErrors[customeErrorKey]; exists {
+			tmpError = customeError
+		}
+
+		errors = addError(input, "date_format", errors, tmpError)
+		return errors
+	}
+
+	_, err_date := time.Parse(formato, valueStr)
 
 	if err_date != nil {
 		tmpError := "El formato de la fecha es inválido"

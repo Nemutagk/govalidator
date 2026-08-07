@@ -19,7 +19,7 @@ func Array(input string, value any, payload map[string]any, options []string, sl
 		if customeError, exists := customeErrors[tmpErrorKey]; exists {
 			tmpError = customeError
 		}
-		addError(input, "before", errors, tmpError)
+		errors = addError(input, "array", errors, tmpError)
 		return errors
 	}
 

@@ -12,6 +12,10 @@ func Before(input string, value any, payload map[string]any, options []string, s
 		return errors
 	}
 
+	if value == nil || value == "" {
+		return errors
+	}
+
 	num, ok := value.(int)
 	if ok {
 		if len(options) == 0 {
