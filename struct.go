@@ -2,7 +2,6 @@ package govalidator
 
 import (
 	"fmt"
-	"log"
 	"reflect"
 	"strings"
 )
@@ -24,7 +23,7 @@ func ValidateStruct[T any](s T, inputs []Input, customeallErrors map[string]stri
 		return zero, fmt.Errorf("error convirtiendo struct a map: %w", err)
 	}
 
-	log.Printf("body: %+v", body)
+	// log.Printf("body: %+v", body)
 	safePayload, err := ValidateRequest(body, inputs, customeallErrors, models)
 	if err != nil {
 		return zero, err

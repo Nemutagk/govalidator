@@ -15,5 +15,9 @@
 				"golang.go"
 			]
 		}
-	}
+	},
+	"mounts": [
+		"source=${localEnv:HOME}/.claude,target=/home/vscode/.claude,type=bind,consistency=cached",
+        "source=${localEnv:HOME}/.ssh,target=/home/vscode/.ssh,type=bind",
+	]
 }

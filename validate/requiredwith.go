@@ -39,7 +39,7 @@ func RequiredWith(input string, value any, payload map[string]any, options []str
 			tmpError = customeError
 		}
 
-		if _, ok := payload[input]; !ok {
+		if val, ok := payload[input]; !ok || helper.IsEmpty(val) {
 			errors = addError(input, "required_with", errors, tmpError)
 		}
 
@@ -58,7 +58,7 @@ func RequiredWith(input string, value any, payload map[string]any, options []str
 			tmpError = customeError
 		}
 
-		if _, ok := payload[input]; !ok {
+		if val, ok := payload[input]; !ok || helper.IsEmpty(val) || val != options[1] {
 			errors = addError(input, "required_with", errors, tmpError)
 		}
 

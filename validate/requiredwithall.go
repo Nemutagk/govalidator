@@ -3,6 +3,8 @@ package validate
 import (
 	"fmt"
 	"strings"
+
+	"github.com/Nemutagk/govalidator/v2/helper"
 )
 
 func RequiredWithAll(input string, value any, payload map[string]any, options []string, sliceIndex string, errors map[string]interface{}, addError func(string, string, map[string]interface{}, string) map[string]interface{}, customeErrors map[string]string) (map[string]interface{}, bool) {
@@ -22,7 +24,7 @@ func RequiredWithAll(input string, value any, payload map[string]any, options []
 
 	all_defined := true
 	for _, another_input := range options {
-		if _, exists_another_input := payload[another_input]; !exists_another_input {
+		if val, exists_another_input := payload[another_input]; !exists_another_input || helper.IsEmpty(val) {
 			all_defined = false
 			break
 		}
