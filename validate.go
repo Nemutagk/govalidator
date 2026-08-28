@@ -414,6 +414,13 @@ func applyRules(inputName any, input Input, value any, body map[string]any, cust
 			allErrors = validate.NotEqual(inputNameStr, value, body, opts, sliceIndex, allErrors, addError, customeallErrors)
 		case "required_if":
 			allErrors = validate.RequiredIf(inputNameStr, value, rootBody, opts, sliceIndex, allErrors, addError, customeallErrors)
+		case "required_if_all":
+			getError := false
+			allErrors, getError = validate.RequiredIfAll(inputNameStr, value, rootBody, opts, sliceIndex, allErrors, addError, customeallErrors)
+			if getError {
+				skipRulesMap = true
+				includesSometimesRule[inputNameStr] = true
+			}
 		default:
 			allErrors = addError(inputNameStr, rule.Name, allErrors, "La regla "+rule.Name+" no es válida")
 		}
