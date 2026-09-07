@@ -97,6 +97,17 @@ func rangeInputs(body map[string]any, inputs []Input, customeallErrors map[strin
 	allErrors := make(map[string]any)
 	includesSometimesRule := make(map[string]bool)
 
+	// Campos que además de una regla "bare" (ej. "payload") también tienen
+	// reglas con punto sobre sub-campos (ej. "payload.mode") en este mismo
+	// nivel. Para esos, la regla bare solo valida (ej. required) y no debe
+	// pisar con el valor crudo lo que las reglas con punto ya filtraron.
+	hasNestedRule := make(map[string]bool)
+	for _, inp := range inputs {
+		if strings.Contains(inp.Name, ".") {
+			hasNestedRule[strings.SplitN(inp.Name, ".", 2)[0]] = true
+		}
+	}
+
 	for index, input := range inputs {
 		// log.Printf("--------------------------------------------------")
 		inputName := input.Name
@@ -126,6 +137,28 @@ func rangeInputs(body map[string]any, inputs []Input, customeallErrors map[strin
 
 		switch value := value.(type) {
 		case map[string]any:
+			if inputName == input.Name {
+				tmpPayload, tmpErrors, tmpSometimes := applyRules(inputName, input, value, body, customeallErrors, models, "", rootBody)
+				if !hasNestedRule[inputName] {
+					safePayload[inputName] = tmpPayload
+				}
+				for k, v := range tmpErrors {
+					if pathPrefix != "" {
+						allErrors[pathPrefix+"."+k] = v
+					} else {
+						allErrors[k] = v
+					}
+				}
+				for k, v := range tmpSometimes {
+					if pathPrefix != "" {
+						includesSometimesRule[pathPrefix+"."+k] = v
+					} else {
+						includesSometimesRule[k] = v
+					}
+				}
+				continue
+			}
+
 			newPrefix := inputName
 			if pathPrefix != "" {
 				newPrefix = pathPrefix + "." + inputName
@@ -235,7 +268,9 @@ func rangeInputs(body map[string]any, inputs []Input, customeallErrors map[strin
 			}
 
 			tmpPayload, tmpErrors, tmpSometimes := applyRules(inputName, input, value, body, customeallErrors, models, sliceIndexStr, rootBody)
-			safePayload[input.Name] = tmpPayload
+			if !hasNestedRule[inputName] {
+				safePayload[input.Name] = tmpPayload
+			}
 			for k, v := range tmpErrors {
 				if pathPrefix != "" {
 					allErrors[pathPrefix+"."+k] = v
