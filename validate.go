@@ -7,16 +7,32 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/Nemutagk/govalidator/v2/normalize"
 	"github.com/Nemutagk/govalidator/v2/validate"
 )
 
 type Input struct {
-	Name   string
-	Parent string
-	Rules  []Rule
+	Name  string
+	Rules []Rule
+	// Normalizers se ejecutan, en el orden declarado, antes que todas las
+	// Rules de este mismo campo. Transforman el valor (ej. lower, trim) y
+	// escriben el resultado de vuelta en el body de la validación, por lo
+	// que reglas que leen otro campo (confirmation, required_if, etc.)
+	// también ven el valor ya normalizado. Si ValidateRequest se llama con
+	// un map[string]any provisto por el caller, ese mapa se muta en sitio.
+	Normalizers []Normalizer
+	// parent es uso interno: se calcula automáticamente al separar un Name
+	// con notación de punto, para propagar la regla "sometimes" del padre a
+	// sus sub-campos. No se expone porque nunca debe asignarse desde fuera.
+	parent string
 }
 
 type Rule struct {
+	Name    string
+	Options []string
+}
+
+type Normalizer struct {
 	Name    string
 	Options []string
 }
@@ -118,8 +134,8 @@ func rangeInputs(body map[string]any, inputs []Input, customeallErrors map[strin
 			inputName = parts[0]
 			input.Name = strings.Join(parts[1:], ".")
 
-			if input.Parent == "" {
-				input.Parent = inputName
+			if input.parent == "" {
+				input.parent = inputName
 			}
 		}
 		// log.Printf("Processed input: %s", inputName)
@@ -129,8 +145,8 @@ func rangeInputs(body map[string]any, inputs []Input, customeallErrors map[strin
 			value = nil
 		}
 
-		if input.Parent != "" {
-			if _, exists := includesSometimesRule[input.Parent]; exists {
+		if input.parent != "" {
+			if _, exists := includesSometimesRule[input.parent]; exists {
 				input.Rules = append([]Rule{{Name: "sometimes"}}, input.Rules...)
 			}
 		}
@@ -229,7 +245,7 @@ func rangeInputs(body map[string]any, inputs []Input, customeallErrors map[strin
 						} else {
 							elemBody = make(map[string]any)
 						}
-						elemInput := Input{Name: remaining, Rules: input.Rules, Parent: input.Parent}
+						elemInput := Input{Name: remaining, Rules: input.Rules, parent: input.parent, Normalizers: input.Normalizers}
 						tmpPayload, tmpErrors, tmpSometimes := rangeInputs(elemBody, []Input{elemInput}, customeallErrors, models, strconv.Itoa(i), elemPrefix, rootBody)
 						resultSlice = append(resultSlice, tmpPayload)
 						for k, v := range tmpErrors {
@@ -348,6 +364,40 @@ func applyRules(inputName any, input Input, value any, body map[string]any, cust
 		inputNameStr = strconv.Itoa(inputName.(int))
 	} else {
 		inputNameStr = inputName.(string)
+	}
+
+	if len(input.Normalizers) > 0 && value != nil {
+		for _, normalizer := range input.Normalizers {
+			switch normalizer.Name {
+			case "lower":
+				value = normalize.Lower(value, normalizer.Options)
+			case "upper":
+				value = normalize.Upper(value, normalizer.Options)
+			case "trim":
+				value = normalize.Trim(value, normalizer.Options)
+			case "ltrim":
+				value = normalize.LTrim(value, normalizer.Options)
+			case "rtrim":
+				value = normalize.RTrim(value, normalizer.Options)
+			case "trim_char":
+				value = normalize.TrimChar(value, normalizer.Options)
+			case "capitalize":
+				value = normalize.Capitalize(value, normalizer.Options)
+			case "remove_spaces":
+				value = normalize.RemoveSpaces(value, normalizer.Options)
+			case "only_digits":
+				value = normalize.OnlyDigits(value, normalizer.Options)
+			case "to_int":
+				value = normalize.ToInt(value, normalizer.Options)
+			case "to_float":
+				value = normalize.ToFloat(value, normalizer.Options)
+			case "to_bool":
+				value = normalize.ToBool(value, normalizer.Options)
+			default:
+				allErrors = addError(inputNameStr, normalizer.Name, allErrors, "El normalizador "+normalizer.Name+" no es válido")
+			}
+		}
+		body[inputNameStr] = value
 	}
 
 	for _, rule := range input.Rules {
