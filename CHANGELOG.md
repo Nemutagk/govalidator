@@ -44,8 +44,16 @@ proyecto intenta seguir [Semantic Versioning](https://semver.org/lang/es/).
   sobreescrito con el valor crudo sin filtrar, reintroduciendo campos que ninguna regla
   había cubierto. Esto ya pasaba también con arreglos (`items` + `items.*.mode`); ahora
   el comportamiento es consistente para ambos casos.
+- Un campo de un tipo con nombre distinto de su primitivo subyacente (ej.
+  `type StatusType string`, `type Priority int`) siempre fallaba reglas que comparan por
+  igualdad o hacen un type assertion sobre un primitivo plano (`in`, `not_in`, `equal`,
+  `not_equal`, `boolean`, `min`, `max`, comparaciones numéricas), sin importar el valor,
+  porque `ValidateStruct` conservaba el tipo con nombre al convertir el struct a
+  `map[string]any` — y en Go, dos interfaces solo son iguales si su tipo dinámico también
+  coincide. Ahora esos valores se "desenvuelven" a su primitivo subyacente
+  (`string`, `bool`, `int`, `int8`...`uint64`, `float32`/`64`) antes de validarse.
 
 ### Tests
 
-- Suite de pruebas de regresión a nivel raíz (`validate_test.go`) para los dos fixes
-  anteriores y para el nuevo sistema de `Normalizers`.
+- Suite de pruebas de regresión a nivel raíz (`validate_test.go`, `struct_test.go`) para
+  los tres fixes anteriores y para el nuevo sistema de `Normalizers`.

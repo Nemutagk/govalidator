@@ -141,6 +141,50 @@ func reflectToAny(v reflect.Value, tag string) (any, error) {
 		}
 		return result, nil
 	default:
+		// Los valores con un tipo con nombre distinto de su tipo subyacente
+		// (ej. "type StatusType string") conservan ese tipo con nombre al
+		// pasar por v.Interface(), y una comparación por igualdad entre una
+		// interfaz que envuelve StatusType("active") y una que envuelve
+		// string("active") da false en Go, aunque el contenido sea idéntico
+		// (la comparación de interfaces exige que el tipo dinámico también
+		// coincida). Reglas como "in"/"not_in"/"equal" comparan el valor
+		// contra literales de Go planos (string, bool, etc.), así que aquí
+		// se "desenvuelve" el valor a su tipo primitivo subyacente para que
+		// esas comparaciones funcionen igual que con un campo sin tipo con
+		// nombre. Los tipos ya primitivos (string, int, bool, etc.) no se
+		// tocan: v.Type().Name() coincide con v.Kind().String() para ellos.
+		if v.Type().Name() != v.Kind().String() {
+			switch v.Kind() {
+			case reflect.String:
+				return v.String(), nil
+			case reflect.Bool:
+				return v.Bool(), nil
+			case reflect.Int:
+				return int(v.Int()), nil
+			case reflect.Int8:
+				return int8(v.Int()), nil
+			case reflect.Int16:
+				return int16(v.Int()), nil
+			case reflect.Int32:
+				return int32(v.Int()), nil
+			case reflect.Int64:
+				return v.Int(), nil
+			case reflect.Uint:
+				return uint(v.Uint()), nil
+			case reflect.Uint8:
+				return uint8(v.Uint()), nil
+			case reflect.Uint16:
+				return uint16(v.Uint()), nil
+			case reflect.Uint32:
+				return uint32(v.Uint()), nil
+			case reflect.Uint64:
+				return v.Uint(), nil
+			case reflect.Float32:
+				return float32(v.Float()), nil
+			case reflect.Float64:
+				return v.Float(), nil
+			}
+		}
 		return v.Interface(), nil
 	}
 }

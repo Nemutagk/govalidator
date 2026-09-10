@@ -381,3 +381,12 @@ if err != nil {
   notación de punto: si el padre no existe, no se exige que los hijos existan tampoco.
 - Los `Normalizers` mutan el `body` en sitio — ver la nota en la sección de Normalizers
   si validas un `map[string]any` que también uses después de llamar a `ValidateRequest`.
+- Puedes usar tipos con nombre para tus campos (ej. `type Status string` con constantes
+  como enum) con `ValidateStruct`: el valor se desenvuelve a su primitivo subyacente
+  antes de validarse, así que `in`, `equal`, `boolean`, `min`/`max`, etc. funcionan igual
+  que con un `string`/`int`/`bool` plano.
+- Una regla `campo.*` sobre un arreglo de valores primitivos (`[]string`, `[]int`, o un
+  tipo con nombre de esos, no un arreglo de structs/objetos) no valida cada elemento hoy
+  — solo funcionan las reglas declaradas directo sobre `campo` (ej. `required`, `min`,
+  `array`). Para validar cada elemento de un arreglo necesitas que sus elementos sean
+  objetos (`[]structs`), usando `campo.*.subcampo`.
