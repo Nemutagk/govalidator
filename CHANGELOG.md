@@ -22,6 +22,10 @@ proyecto intenta seguir [Semantic Versioning](https://semver.org/lang/es/).
   `required_if`, etc.) vean el valor ya normalizado.
 - Nuevo paquete `normalize/` con la implementación de cada normalizer built-in y sus
   pruebas unitarias.
+- Regla `in_if`: como `in`, pero el catálogo de valores permitidos solo se exige cuando
+  otro campo (ruta con notación de punto sobre el payload raíz) es igual a un valor
+  dado; si no coincide, no hace nada. Igual que con `required_if`, declarar varios
+  `Input` con distintas condiciones sobre el mismo campo da un OR/if-else entre ellas.
 - `README.md` y `CHANGELOG.md`.
 
 ### Changed

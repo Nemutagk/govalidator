@@ -27,6 +27,7 @@ Requiere Go 1.25 o superior (ver `go.mod`).
 - [Conceptos base](#conceptos-base)
 - [`ValidateStruct` vs `ValidateRequest`](#validatestruct-vs-validaterequest)
 - [Catálogo de reglas](#catálogo-de-reglas)
+- [Reglas `in_if`: catálogo condicional](#reglas-in_if-catálogo-condicional)
 - [Objetos anidados y arreglos](#objetos-anidados-y-arreglos)
 - [Normalizers (pre-proceso de valores)](#normalizers-pre-proceso-de-valores)
 - [Mensajes de error personalizados](#mensajes-de-error-personalizados)
@@ -132,6 +133,7 @@ struct convertido a mapa).
 | `nullable` | — | El campo debe existir en el payload (puede ser `nil`). |
 | `email` | — | Formato de correo válido (regex). |
 | `in` | valores permitidos | El valor debe ser exactamente uno de `Options`. |
+| `in_if` | `[ruta.con.punto, valorEsperado, valorPermitido1, valorPermitido2, ...]` | Igual que `in`, pero solo se aplica cuando el nodo en esa ruta (dentro del payload raíz) es igual a `valorEsperado`; si no coincide (o el nodo no existe), no hace nada — ver [Reglas `in_if`: catálogo condicional](#reglas-in_if-catálogo-condicional). |
 | `not_in` | valores prohibidos | El valor no debe estar en `Options`. |
 | `equal` | `[valor]` | El valor debe ser igual (`==`) a `Options[0]`. |
 | `not_equal` | `[valor]` | El valor debe ser distinto de `Options[0]`. |
@@ -157,6 +159,41 @@ struct convertido a mapa).
 | `unique` | `[nombreDeModelo, ...]` | Ver [`unique`, `exists` y `customized`](#unique-exists-y-customized-validaciones-contra-tu-propio-código). |
 | `exists` | `[nombreDeModelo, ...]` | Igual, pero valida que SÍ exista (lo opuesto a `unique`). |
 | `customized` | `[nombreDeFunción, ...]` | Corre una función de validación 100% tuya. |
+
+## Reglas `in_if`: catálogo condicional
+
+`in_if` es como `in`, pero el catálogo de valores permitidos depende del valor de
+**otro** campo. Solo actúa cuando el nodo en `Options[0]` (ruta con notación de punto
+sobre el payload raíz) es igual a `Options[1]`; el resto de `Options` es la lista
+permitida en ese caso. Si la condición no se cumple, la regla no hace nada — ni pasa ni
+falla, simplemente no participa.
+
+```go
+type Request struct {
+	Mode string `json:"mode"`
+	Kind string `json:"kind"`
+}
+
+// Si mode es "individual", kind solo puede ser "a" o "b".
+// Si mode es "batch", kind solo puede ser "x" o "y".
+rules := []govalidator.Input{
+	{Name: "kind", Rules: []govalidator.Rule{
+		{Name: "in_if", Options: []string{"mode", "individual", "a", "b"}},
+	}},
+	{Name: "kind", Rules: []govalidator.Rule{
+		{Name: "in_if", Options: []string{"mode", "batch", "x", "y"}},
+	}},
+}
+```
+
+Como cada `in_if` solo compara por igualdad, un "if/else" entre varios valores posibles
+se logra declarando un `Input` por cada valor de la condición — el mismo patrón que
+usarías para lograr un OR con `required_if` (ver la nota de `required_if` arriba: varias
+condiciones independientes sobre el mismo campo se comportan como un OR entre ellas). Si
+`mode` no coincide con ninguna de las condiciones declaradas, `kind` queda sin
+restricción por parte de estas reglas — si necesitas un valor "por default" para
+cualquier otro caso, agrega también una regla `in` plana con esa lista, o un `in_if`
+adicional por cada valor restante de `mode` si el dominio es acotado.
 
 ## Objetos anidados y arreglos
 

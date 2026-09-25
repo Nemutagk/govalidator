@@ -412,6 +412,8 @@ func applyRules(inputName any, input Input, value any, body map[string]any, cust
 			allErrors = validate.Unique(inputNameStr, value, body, opts, sliceIndex, allErrors, addError, models, customeallErrors)
 		case "in":
 			allErrors = validate.In(inputNameStr, value, body, opts, sliceIndex, allErrors, addError, customeallErrors)
+		case "in_if":
+			allErrors = validate.InIf(inputNameStr, value, rootBody, opts, sliceIndex, allErrors, addError, customeallErrors)
 		case "not_in":
 			allErrors = validate.NotIn(inputNameStr, value, body, opts, sliceIndex, allErrors, addError, customeallErrors)
 		case "before":

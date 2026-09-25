@@ -261,3 +261,47 @@ func TestValidateStruct_UnknownNormalizerName_ProducesError(t *testing.T) {
 		t.Fatalf("errors = %v, want [%q]", ve.Errors, want)
 	}
 }
+
+type modeKindPayload struct {
+	Mode string `json:"mode"`
+	Kind string `json:"kind"`
+}
+
+func TestValidateStruct_InIf_ComposedAsIfElseAcrossModes(t *testing.T) {
+	// in_if solo actúa por igualdad: para lograr un if/else entre varios
+	// valores posibles de "mode", se declaran varios Input para "kind", uno
+	// por cada valor de "mode" con su propia lista permitida. Cuando "mode"
+	// no coincide con ninguna condición, "kind" no queda restringido por
+	// ningún in_if — es responsabilidad de otra regla (ej. "in" plano, o un
+	// tercer in_if) cubrir ese caso si se necesita.
+	rules := []Input{
+		{Name: "kind", Rules: []Rule{{Name: "in_if", Options: []string{"mode", "individual", "a", "b"}}}},
+		{Name: "kind", Rules: []Rule{{Name: "in_if", Options: []string{"mode", "batch", "x", "y"}}}},
+	}
+
+	cases := []struct {
+		name    string
+		mode    string
+		kind    string
+		wantErr bool
+	}{
+		{"individual_allowed", "individual", "a", false},
+		{"individual_not_allowed", "individual", "x", true},
+		{"batch_allowed", "batch", "x", false},
+		{"batch_not_allowed", "batch", "a", true},
+		{"other_mode_unconstrained", "scheduled", "anything", false},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			p := modeKindPayload{Mode: c.mode, Kind: c.kind}
+			_, err := ValidateStruct(p, rules, nil, nil)
+			if c.wantErr && err == nil {
+				t.Fatalf("mode=%q kind=%q: expected an error, got none", c.mode, c.kind)
+			}
+			if !c.wantErr && err != nil {
+				t.Fatalf("mode=%q kind=%q: expected no error, got %v", c.mode, c.kind, err)
+			}
+		})
+	}
+}
