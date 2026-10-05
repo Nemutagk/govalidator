@@ -26,6 +26,9 @@ proyecto intenta seguir [Semantic Versioning](https://semver.org/lang/es/).
   otro campo (ruta con notación de punto sobre el payload raíz) es igual a un valor
   dado; si no coincide, no hace nada. Igual que con `required_if`, declarar varios
   `Input` con distintas condiciones sobre el mismo campo da un OR/if-else entre ellas.
+- Regla `len`: valida una longitud exacta (`Options[0]`). Para `string` cuenta
+  caracteres (no bytes), para slice/array/map cuenta elementos; los demás tipos se
+  ignoran. Sin `Options` o con un valor no numérico agrega un error en vez de fallar.
 - `README.md` y `CHANGELOG.md`.
 
 ### Changed
@@ -35,6 +38,10 @@ proyecto intenta seguir [Semantic Versioning](https://semver.org/lang/es/).
   `sometimes` a sub-campos) y ningún código dentro de este repo lo asignaba desde
   afuera. Si tu código construía `Input{..., Parent: "..."}` explícitamente, tendrás que
   quitar esa asignación.
+
+- Reglas `min` y `max`: en strings ahora cuentan caracteres en vez de bytes (`"ñ"`
+  cuenta como 1, antes como 2), y sin `Options` agregan un error en vez de provocar un
+  panic.
 
 ### Fixed
 

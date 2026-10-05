@@ -138,8 +138,9 @@ struct convertido a mapa).
 | `equal` | `[valor]` | El valor debe ser igual (`==`) a `Options[0]`. |
 | `not_equal` | `[valor]` | El valor debe ser distinto de `Options[0]`. |
 | `confirmation` | — | Compara `campo` contra `campo_confirmation` (ej. `password`/`password_confirmation`). |
-| `min` | `[n]` | Longitud mínima (string), valor mínimo (int/float) o cantidad mínima de elementos (slice/array). |
+| `min` | `[n]` | Longitud mínima en caracteres (string), valor mínimo (int/float) o cantidad mínima de elementos (slice/array). |
 | `max` | `[n]` | Igual que `min` pero como tope máximo. |
+| `len` | `[n]` | Longitud exacta: `n` caracteres (string, cuenta caracteres y no bytes), `n` elementos (slice/array) o `n` claves (map). Otros tipos (números, `bool`, `nil`) se ignoran. Sin `Options` o con un valor no numérico agrega un error. |
 | `greater_than` / `greater_than_equal` | `[objetivo, layoutPropio?, layoutObjetivo?]` | Compara números o fechas. `objetivo` puede ser un literal o el nombre de otro campo del payload. |
 | `less_than` / `less_than_equal` | igual que arriba | Idéntico pero en sentido inverso. |
 | `before` / `after` | `[objetivo, formato?]` | Compara fechas contra otro campo, un literal, o las palabras `now`/`today`/`tomorrow`/`yesterday`. |
