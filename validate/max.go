@@ -4,9 +4,25 @@ import (
 	"fmt"
 	"reflect"
 	"strconv"
+	"unicode/utf8"
 )
 
 func Max(input string, value any, payload map[string]any, options []string, sliceIndex string, errors map[string]interface{}, addError func(string, string, map[string]interface{}, string) map[string]interface{}, customeErrors map[string]string) map[string]interface{} {
+	if len(options) == 0 {
+		tmpError := fmt.Sprintf("La regla max del campo %s requiere un valor", input)
+
+		if sliceIndex != "" {
+			tmpError = fmt.Sprintf("La regla max del campo %s en la posición %s requiere un valor", input, sliceIndex)
+		}
+
+		tmpErrorKey := fmt.Sprintf("%s.max", input)
+		if customeError, exists := customeErrors[tmpErrorKey]; exists {
+			tmpError = customeError
+		}
+		errors = addError(input, "max", errors, tmpError)
+		return errors
+	}
+
 	max, err := strconv.ParseInt(options[0], 10, 64)
 	if err != nil {
 		tmpError := fmt.Sprintf("El campo %s debe ser un número", input)
@@ -24,7 +40,7 @@ func Max(input string, value any, payload map[string]any, options []string, slic
 	}
 
 	if _, ok := value.(string); ok {
-		strlen := len(value.(string))
+		strlen := utf8.RuneCountInString(value.(string))
 
 		if strlen > int(max) {
 			tmpError := fmt.Sprintf("El campo %s debe tener como máximo %s caracteres", input, options[0])

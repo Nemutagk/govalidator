@@ -249,3 +249,47 @@ func TestMin_NilValue_NoError(t *testing.T) {
 		t.Fatalf("expected no errors for nil value, got %v", errors)
 	}
 }
+
+func TestMin_MissingOption(t *testing.T) {
+	errors := make(map[string]interface{})
+	errors = Min("qty", 5, map[string]any{}, []string{}, "", errors, testAddError, map[string]string{})
+
+	msgs, found := getErrorMsgs(errors, "qty", "min")
+	want := "La regla min del campo qty requiere un valor"
+	if !found || msgs[0] != want {
+		t.Fatalf("msgs = %v, want %q", msgs, want)
+	}
+}
+
+func TestMin_MissingOption_WithSliceIndex(t *testing.T) {
+	errors := make(map[string]interface{})
+	errors = Min("qty", 5, map[string]any{}, nil, "1", errors, testAddError, map[string]string{})
+
+	msgs, found := getErrorMsgs(errors, "qty", "min")
+	want := "La regla min del campo qty en la posición 1 requiere un valor"
+	if !found || msgs[0] != want {
+		t.Fatalf("msgs = %v, want %q", msgs, want)
+	}
+}
+
+func TestMin_MissingOption_CustomError(t *testing.T) {
+	errors := make(map[string]interface{})
+	customErrors := map[string]string{"qty.min": "mensaje personalizado"}
+	errors = Min("qty", 5, map[string]any{}, []string{}, "", errors, testAddError, customErrors)
+
+	msgs, found := getErrorMsgs(errors, "qty", "min")
+	if !found || msgs[0] != "mensaje personalizado" {
+		t.Fatalf("expected custom error message, got %v", errors)
+	}
+}
+
+func TestMin_String_CountsCharactersNotBytes(t *testing.T) {
+	errors := make(map[string]interface{})
+	errors = Min("name", "añ", map[string]any{}, []string{"3"}, "", errors, testAddError, map[string]string{})
+
+	msgs, found := getErrorMsgs(errors, "name", "min")
+	want := "El campo name debe tener al menos 3 caracteres"
+	if !found || msgs[0] != want {
+		t.Fatalf("msgs = %v, want %q", msgs, want)
+	}
+}

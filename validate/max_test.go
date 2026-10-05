@@ -258,3 +258,45 @@ func TestMax_NilValue_NoError(t *testing.T) {
 		t.Fatalf("expected no errors for nil value, got %v", errors)
 	}
 }
+
+func TestMax_MissingOption(t *testing.T) {
+	errors := make(map[string]interface{})
+	errors = Max("qty", 5, map[string]any{}, []string{}, "", errors, testAddError, map[string]string{})
+
+	msgs, found := getErrorMsgs(errors, "qty", "max")
+	want := "La regla max del campo qty requiere un valor"
+	if !found || msgs[0] != want {
+		t.Fatalf("msgs = %v, want %q", msgs, want)
+	}
+}
+
+func TestMax_MissingOption_WithSliceIndex(t *testing.T) {
+	errors := make(map[string]interface{})
+	errors = Max("qty", 5, map[string]any{}, nil, "1", errors, testAddError, map[string]string{})
+
+	msgs, found := getErrorMsgs(errors, "qty", "max")
+	want := "La regla max del campo qty en la posición 1 requiere un valor"
+	if !found || msgs[0] != want {
+		t.Fatalf("msgs = %v, want %q", msgs, want)
+	}
+}
+
+func TestMax_MissingOption_CustomError(t *testing.T) {
+	errors := make(map[string]interface{})
+	customErrors := map[string]string{"qty.max": "mensaje personalizado"}
+	errors = Max("qty", 5, map[string]any{}, []string{}, "", errors, testAddError, customErrors)
+
+	msgs, found := getErrorMsgs(errors, "qty", "max")
+	if !found || msgs[0] != "mensaje personalizado" {
+		t.Fatalf("expected custom error message, got %v", errors)
+	}
+}
+
+func TestMax_String_CountsCharactersNotBytes(t *testing.T) {
+	errors := make(map[string]interface{})
+	errors = Max("name", "añoñ", map[string]any{}, []string{"4"}, "", errors, testAddError, map[string]string{})
+
+	if len(errors) != 0 {
+		t.Fatalf("expected no errors, got %v", errors)
+	}
+}
