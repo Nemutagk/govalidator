@@ -1,6 +1,9 @@
 package validate
 
-import "testing"
+import (
+	"fmt"
+	"testing"
+)
 
 func existsModels() map[string]func(data any, payload map[string]any, opts *[]string) (bool, string) {
 	return map[string]func(data any, payload map[string]any, opts *[]string) (bool, string){
@@ -65,9 +68,9 @@ func TestExists_ModelKeyNotFoundWithSliceIndex(t *testing.T) {
 	}
 }
 
-func TestExists_ValueNotString(t *testing.T) {
+func TestExists_ValueNotScalar(t *testing.T) {
 	errors := make(map[string]interface{})
-	errors = Exists("user_id", 123, map[string]any{}, []string{"valid"}, "", errors, testAddError, existsModels(), map[string]string{})
+	errors = Exists("user_id", []string{"x"}, map[string]any{}, []string{"valid"}, "", errors, testAddError, existsModels(), map[string]string{})
 
 	msgs, found := getErrorMsgs(errors, "user_id", "exists")
 	if !found || msgs[0] != "el valor no es válido" {
@@ -75,9 +78,9 @@ func TestExists_ValueNotString(t *testing.T) {
 	}
 }
 
-func TestExists_ValueNotStringWithSliceIndex(t *testing.T) {
+func TestExists_ValueNotScalarWithSliceIndex(t *testing.T) {
 	errors := make(map[string]interface{})
-	errors = Exists("user_id", 123, map[string]any{}, []string{"valid"}, "2", errors, testAddError, existsModels(), map[string]string{})
+	errors = Exists("user_id", []string{"x"}, map[string]any{}, []string{"valid"}, "2", errors, testAddError, existsModels(), map[string]string{})
 
 	msgs, found := getErrorMsgs(errors, "user_id", "exists")
 	want := "El valor en la posición 2 no es válido"
@@ -145,5 +148,43 @@ func TestExists_ModelFailsCustomErrTakesPrecedenceOverCustomeErrors(t *testing.T
 	msgs, found := getErrorMsgs(errors, "user_id", "exists")
 	if !found || msgs[0] != "el usuario no está activo" {
 		t.Fatalf("expected model error to take precedence, got %v", errors)
+	}
+}
+
+func TestExists_NumericValueReachesModelAsString(t *testing.T) {
+	var received any
+	models := map[string]func(data any, payload map[string]any, opts *[]string) (bool, string){
+		"capture": func(data any, payload map[string]any, opts *[]string) (bool, string) {
+			received = data
+			return true, ""
+		},
+	}
+
+	for _, v := range []any{int64(123), 7, uint8(3), 1.5, true} {
+		want := fmt.Sprint(v)
+		errors := make(map[string]interface{})
+		errors = Exists("user_id", v, map[string]any{}, []string{"capture"}, "", errors, testAddError, models, map[string]string{})
+
+		if len(errors) != 0 {
+			t.Fatalf("value %v (%T): expected no errors, got %v", v, v, errors)
+		}
+		if received != want {
+			t.Fatalf("model received %v (%T), want the string %q", received, received, want)
+		}
+	}
+}
+
+func TestExists_NumericValueNotFoundMessage(t *testing.T) {
+	models := map[string]func(data any, payload map[string]any, opts *[]string) (bool, string){
+		"never": func(data any, payload map[string]any, opts *[]string) (bool, string) { return false, "" },
+	}
+
+	errors := make(map[string]interface{})
+	errors = Exists("user_id", int64(123), map[string]any{}, []string{"never"}, "", errors, testAddError, models, map[string]string{})
+
+	msgs, found := getErrorMsgs(errors, "user_id", "exists")
+	want := "El valor '123' no existe"
+	if !found || msgs[0] != want {
+		t.Fatalf("msgs = %v, want %q", msgs, want)
 	}
 }

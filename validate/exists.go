@@ -34,7 +34,7 @@ func Exists(input string, value any, payload map[string]any, options []string, s
 		return errors
 	}
 
-	valueStr, ok := value.(string)
+	valueStr, ok := scalarToString(value)
 	if !ok {
 		tmpError := "el valor no es válido"
 
@@ -54,10 +54,10 @@ func Exists(input string, value any, payload map[string]any, options []string, s
 	result, customErr := model(valueStr, payload, &anotherOpts)
 
 	if !result {
-		tmpError := fmt.Sprintf("El valor '%s' no existe", value)
+		tmpError := fmt.Sprintf("El valor '%s' no existe", valueStr)
 
 		if sliceIndex != "" {
-			tmpError = fmt.Sprintf("El valor '%s' en la posición %s no existe", value, sliceIndex)
+			tmpError = fmt.Sprintf("El valor '%s' en la posición %s no existe", valueStr, sliceIndex)
 		}
 
 		tmpErrorKey := fmt.Sprintf("%s.exists", input)

@@ -11,7 +11,7 @@ import (
  */
 func Unique(input string, value any, payload map[string]any, options []string, sliceIndex string, list_errors map[string]interface{}, addError func(string, string, map[string]interface{}, string) map[string]interface{}, listModels map[string]func(data any, payload map[string]any, opts *[]string) (bool, string), customeErrors map[string]string) map[string]interface{} {
 	if len(options) != 1 {
-		list_errors = addError(input, "unique", list_errors, "the options is not valid")
+		list_errors = addError(input, "unique", list_errors, "la configuración de conexión no es válida")
 		return list_errors
 	}
 
@@ -38,7 +38,7 @@ func Unique(input string, value any, payload map[string]any, options []string, s
 		return list_errors
 	}
 
-	valueStr, ok := value.(string)
+	valueStr, ok := scalarToString(value)
 	if !ok {
 		if sliceIndex != "" {
 			list_errors = addError(input, "unique", list_errors, fmt.Sprintf("el valor en la posición %s no es válido", sliceIndex))
