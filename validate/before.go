@@ -2,7 +2,6 @@ package validate
 
 import (
 	"fmt"
-	"strconv"
 	"time"
 )
 
@@ -16,30 +15,31 @@ func Before(input string, value any, payload map[string]any, options []string, s
 		return errors
 	}
 
-	num, ok := value.(int)
-	if ok {
-		if len(options) == 0 {
+	if ownNum, isNumber := toFloat64(value); isNumber {
+		cmpNum, isField, errMsg := resolveNumericTarget(payload, options[0])
+		if errMsg != "" {
+			errors = addError(input, "before", errors, errMsg)
+			return errors
+		}
+
+		if ownNum > cmpNum {
+			targetLabel := "número"
+			if isField {
+				targetLabel = "campo"
+			}
+
+			tmpError := fmt.Sprintf("La entrada %s no es anterior al %s %s", input, targetLabel, options[0])
+
 			if sliceIndex != "" {
-				input = fmt.Sprintf("%s[%s]", input, sliceIndex)
-			} else {
-				errors = addError(input, "before", errors, "El valor a comparar no está definido")
+				tmpError = fmt.Sprintf("La entrada en la posición %s no es anterior al %s %s", sliceIndex, targetLabel, options[0])
 			}
-		} else {
-			compare_int, _ := strconv.Atoi(options[0])
-			if num > compare_int {
-				tmpError := "La entrada " + input + " no es anterior al número " + options[0]
 
-				if sliceIndex != "" {
-					tmpError = fmt.Sprintf("La entrada en la posición %s no es anterior al número %s", sliceIndex, options[0])
-				}
-
-				customeErrorKey := fmt.Sprintf("%s.before", input)
-				if customeError, exists := customeErrors[customeErrorKey]; exists {
-					tmpError = customeError
-				}
-
-				errors = addError(input, "before", errors, tmpError)
+			customeErrorKey := fmt.Sprintf("%s.before", input)
+			if customeError, exists := customeErrors[customeErrorKey]; exists {
+				tmpError = customeError
 			}
+
+			errors = addError(input, "before", errors, tmpError)
 		}
 
 		return errors

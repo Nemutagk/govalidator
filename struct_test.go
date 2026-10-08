@@ -91,3 +91,47 @@ func TestValidateStruct_PlainPrimitiveTypes_StillWork(t *testing.T) {
 		t.Fatalf("got %q, want %q", result.Status, "individual")
 	}
 }
+
+type kdfRequest struct {
+	Memory      int64   `json:"kdf_memory_kib"`
+	Iterations  int32   `json:"kdf_iterations"`
+	Parallelism uint8   `json:"kdf_parallelism"`
+	Ratio       float32 `json:"ratio"`
+}
+
+func TestValidateStruct_NonIntNumericTypes_AreValidatedByMinMax(t *testing.T) {
+	// min y max solo reconocían int y float64, así que cualquier otro tipo
+	// numérico (int64, int32, uint8, float32...) pasaba sin validarse.
+	req := kdfRequest{Memory: 1024, Iterations: 1, Parallelism: 1, Ratio: 0.5}
+
+	rules := []Input{
+		{Name: "kdf_memory_kib", Rules: []Rule{{Name: "min", Options: []string{"19456"}}}},
+		{Name: "kdf_iterations", Rules: []Rule{{Name: "min", Options: []string{"2"}}}},
+		{Name: "kdf_parallelism", Rules: []Rule{{Name: "min", Options: []string{"2"}}}},
+		{Name: "ratio", Rules: []Rule{{Name: "min", Options: []string{"1"}}}},
+	}
+
+	_, err := ValidateStruct(req, rules, nil, nil)
+	ve, ok := AsValidationError(err)
+	if !ok {
+		t.Fatalf("expected a validation error, got %v", err)
+	}
+	if len(ve.Errors) != 4 {
+		t.Fatalf("expected 4 errors (one per field), got %v", ve.Errors)
+	}
+}
+
+func TestValidateStruct_NonIntNumericTypes_ValidValuesPass(t *testing.T) {
+	req := kdfRequest{Memory: 19456, Iterations: 2, Parallelism: 2, Ratio: 1}
+
+	rules := []Input{
+		{Name: "kdf_memory_kib", Rules: []Rule{{Name: "min", Options: []string{"19456"}}, {Name: "max", Options: []string{"19456"}}}},
+		{Name: "kdf_iterations", Rules: []Rule{{Name: "min", Options: []string{"2"}}, {Name: "max", Options: []string{"2"}}}},
+		{Name: "kdf_parallelism", Rules: []Rule{{Name: "min", Options: []string{"2"}}, {Name: "max", Options: []string{"2"}}}},
+		{Name: "ratio", Rules: []Rule{{Name: "greater_than_equal", Options: []string{"1"}}}},
+	}
+
+	if _, err := ValidateStruct(req, rules, nil, nil); err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+}

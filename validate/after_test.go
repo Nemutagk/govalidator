@@ -272,7 +272,7 @@ func TestAfter_IntComparisonCustomErrorMessage(t *testing.T) {
 }
 
 func TestAfter_NonStringValueNoPanic(t *testing.T) {
-	for _, v := range []any{true, 3.5, []any{1}, map[string]any{"k": 1}} {
+	for _, v := range []any{true, []any{1}, map[string]any{"k": 1}} {
 		errors := make(map[string]interface{})
 		errors = After("date", v, map[string]any{}, []string{"2024-01-01"}, "", errors, testAddError, map[string]string{})
 

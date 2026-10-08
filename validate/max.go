@@ -39,10 +39,10 @@ func Max(input string, value any, payload map[string]any, options []string, slic
 		return errors
 	}
 
-	if _, ok := value.(string); ok {
-		strlen := utf8.RuneCountInString(value.(string))
+	if strValue, ok := value.(string); ok {
+		strlen := utf8.RuneCountInString(strValue)
 
-		if strlen > int(max) {
+		if int64(strlen) > max {
 			tmpError := fmt.Sprintf("El campo %s debe tener como máximo %s caracteres", input, options[0])
 
 			if sliceIndex != "" {
@@ -57,44 +57,24 @@ func Max(input string, value any, payload map[string]any, options []string, slic
 		}
 	}
 
-	if _, ok := value.(int); ok {
-		intValue := value.(int)
-		if intValue > int(max) {
-			tmpError := fmt.Sprintf("El campo %s debe ser como máximo %s", input, options[0])
+	if result, isNumber := compareToInt64(value, max); isNumber && result > 0 {
+		tmpError := fmt.Sprintf("El campo %s debe ser como máximo %s", input, options[0])
 
-			if sliceIndex != "" {
-				tmpError = fmt.Sprintf("El campo %s en la posición %s debe ser como máximo %s", input, sliceIndex, options[0])
-			}
-
-			tmpErrorKey := fmt.Sprintf("%s.max", input)
-			if customeError, exists := customeErrors[tmpErrorKey]; exists {
-				tmpError = customeError
-			}
-			errors = addError(input, "max", errors, tmpError)
+		if sliceIndex != "" {
+			tmpError = fmt.Sprintf("El campo %s en la posición %s debe ser como máximo %s", input, sliceIndex, options[0])
 		}
-	}
 
-	if _, ok := value.(float64); ok {
-		floatValue := value.(float64)
-		if floatValue > float64(max) {
-			tmpError := fmt.Sprintf("El campo %s debe ser como máximo %s", input, options[0])
-
-			if sliceIndex != "" {
-				tmpError = fmt.Sprintf("El campo %s en la posición %s debe ser como máximo %s", input, sliceIndex, options[0])
-			}
-
-			tmpErrorKey := fmt.Sprintf("%s.max", input)
-			if customeError, exists := customeErrors[tmpErrorKey]; exists {
-				tmpError = customeError
-			}
-			errors = addError(input, "max", errors, tmpError)
+		tmpErrorKey := fmt.Sprintf("%s.max", input)
+		if customeError, exists := customeErrors[tmpErrorKey]; exists {
+			tmpError = customeError
 		}
+		errors = addError(input, "max", errors, tmpError)
 	}
 
 	val := reflect.ValueOf(value)
 	kind := val.Kind()
 	if kind == reflect.Slice || kind == reflect.Array {
-		if val.Len() > int(max) {
+		if int64(val.Len()) > max {
 			tmpError := fmt.Sprintf("El campo %s debe tener como máximo %s elementos", input, options[0])
 
 			if sliceIndex != "" {
