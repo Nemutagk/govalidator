@@ -132,18 +132,18 @@ struct convertido a mapa).
 | `sometimes` | — | Si el campo no existe o es `nil`, se saltan las demás reglas de ese campo (no marca error). |
 | `nullable` | — | El campo debe existir en el payload (puede ser `nil`). |
 | `email` | — | Formato de correo válido (regex). |
-| `in` | valores permitidos | El valor debe ser exactamente uno de `Options`. |
+| `in` | valores permitidos | El valor debe ser exactamente uno de `Options`. La comparación es texto contra texto: strings, `bool`, enteros y flotantes se convierten a su texto (`5` coincide con `"5"`, `true` con `"true"`). Lo mismo aplica a `not_in`, `equal`, `not_equal`, `in_if` y al valor esperado de `required_with`. |
 | `in_if` | `[ruta.con.punto, valorEsperado, valorPermitido1, valorPermitido2, ...]` | Igual que `in`, pero solo se aplica cuando el nodo en esa ruta (dentro del payload raíz) es igual a `valorEsperado`; si no coincide (o el nodo no existe), no hace nada — ver [Reglas `in_if`: catálogo condicional](#reglas-in_if-catálogo-condicional). |
 | `not_in` | valores prohibidos | El valor no debe estar en `Options`. |
 | `equal` | `[valor]` | El valor debe ser igual (`==`) a `Options[0]`. |
 | `not_equal` | `[valor]` | El valor debe ser distinto de `Options[0]`. |
 | `confirmation` | — | Compara `campo` contra `campo_confirmation` (ej. `password`/`password_confirmation`). |
-| `min` | `[n]` | Longitud mínima en caracteres (string), valor mínimo (int/float) o cantidad mínima de elementos (slice/array). |
+| `min` | `[n]` | Longitud mínima en caracteres (string), valor mínimo (cualquier tipo numérico de Go: `int`, `int8`...`int64`, `uint`...`uint64`, `float32`, `float64`, incluidos los tipos con nombre) o cantidad mínima de elementos (slice/array). |
 | `max` | `[n]` | Igual que `min` pero como tope máximo. |
 | `len` | `[n]` | Longitud exacta: `n` caracteres (string, cuenta caracteres y no bytes), `n` elementos (slice/array) o `n` claves (map). Otros tipos (números, `bool`, `nil`) se ignoran. Sin `Options` o con un valor no numérico agrega un error. |
-| `greater_than` / `greater_than_equal` | `[objetivo, layoutPropio?, layoutObjetivo?]` | Compara números o fechas. `objetivo` puede ser un literal o el nombre de otro campo del payload. |
+| `greater_than` / `greater_than_equal` | `[objetivo, layoutPropio?, layoutObjetivo?]` | Compara números (cualquier tipo numérico de Go) o fechas. `objetivo` puede ser un literal o el nombre de otro campo del payload. |
 | `less_than` / `less_than_equal` | igual que arriba | Idéntico pero en sentido inverso. |
-| `before` / `after` | `[objetivo, formato?]` | Compara fechas contra otro campo, un literal, o las palabras `now`/`today`/`tomorrow`/`yesterday`. Si el valor, o el campo contra el que se compara, no es un string con formato de fecha válido, agrega un error de fecha inválida. |
+| `before` / `after` | `[objetivo, formato?]` | Compara fechas contra otro campo, un literal, o las palabras `now`/`today`/`tomorrow`/`yesterday`. Si el valor es numérico (cualquier tipo numérico de Go), compara números: `objetivo` puede ser un literal numérico (entero o decimal) o el nombre de otro campo numérico del payload, y un objetivo que no sea numérico agrega un error. Si el valor, o el campo contra el que se compara, no es un string con formato de fecha válido, agrega un error de fecha inválida. |
 | `date` | `[layout?]` | Es una fecha válida con el layout dado (default `2006-01-02T15:04:05`). |
 | `date_format` | `[layout]` | Igual, pero el layout es obligatorio. |
 | `boolean` | — | El valor es literalmente `bool` (no acepta `"true"`/`1`; para eso ver el normalizer `to_bool`). |
@@ -369,7 +369,7 @@ safe, err := govalidator.ValidateStruct(req, rules, nil, models)
 - `customized:nombre,...` — regla de propósito general; regresa `true` cuando el valor
   es válido según tu propia lógica.
 
-En los tres casos, cualquier `Options` después del nombre de la función (`opts[1:]`) se
+En los tres casos, tu función recibe el valor del campo como `string`: los números y `bool` se convierten a su texto (un id `int64(123)` llega como `"123"`). `unique` y `exists` dan error si el valor es `nil`, un slice, un map o un struct. Cualquier `Options` después del nombre de la función (`opts[1:]`) se
 te pasa como `*[]string` en el tercer parámetro, para que definas parámetros extra sin
 tener que hardcodear el nombre de tabla/columna en la librería. Si tu función regresa un
 segundo valor (`string`) no vacío, se usa como mensaje de error en vez del genérico.

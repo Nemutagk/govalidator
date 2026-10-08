@@ -49,6 +49,42 @@ proyecto intenta seguir [Semantic Versioning](https://semver.org/lang/es/).
 
 ### Fixed
 
+- `unique` y `exists` solo aceptaban strings: con un valor numérico o `bool` (por ejemplo
+  un id `int64`) respondían `el valor no es válido` sin llamar a tu función. Ahora ese
+  valor se convierte a su texto (`int64(123)` llega como `'123'`) y tu función recibe
+  siempre un `string`, igual que antes, así que el código existente no cambia. Solo dan
+  error `nil`, slices, maps y structs. El mensaje de `unique` para una configuración
+  inválida estaba en inglés (`the options is not valid`); ahora es
+  `la configuración de conexión no es válida`, igual que en `exists`.
+- `before` y `after` sobre un valor numérico solo aceptaban un entero literal como objetivo
+  y, si era el nombre de otro campo, lo trataban en silencio como 0. Ahora aceptan, igual
+  que `greater_than` y `less_than`, un literal numérico (entero o decimal) o el nombre de
+  otro campo numérico, y un objetivo que no sea numérico agrega el error
+  `El valor a comparar X no es un número válido` en vez de usarse como 0. El mensaje dice
+  `al campo X` cuando el objetivo es un campo.
+- `in`, `not_in`, `equal`, `not_equal`, `in_if` y el valor esperado de `required_with`
+  comparaban el valor del campo contra `Options` (siempre strings) con `==` entre
+  interfaces, así que un valor que no fuera string nunca era igual: `in` y `equal`
+  fallaban siempre con un campo numérico o `bool`, y `not_in` y `not_equal` pasaban siempre
+  en silencio (`not_in: ['0']` aceptaba el entero 0). Ahora la comparación es texto contra
+  texto: strings, `bool`, enteros, `uint` y flotantes (incluidos los tipos con nombre) se
+  convierten a su texto antes de compararse, de modo que `5` coincide con `'5'`.
+- Los mensajes personalizados de `not_in` y `nullable` solo se aplicaban con las claves
+  `campo.notin` y `campo.null`, no con `campo.not_in` y `campo.nullable` (la forma
+  `campo.regla` documentada). Ahora funcionan las dos formas; las claves anteriores
+  siguen valiendo y la documentada tiene prioridad si se definen ambas.
+- `min` y `max` ignoraban en silencio cualquier valor numérico que no fuera `int` ni
+  `float64` (`int8`/`int16`/`int32`/`int64`, `uint*`, `float32`): la regla terminaba sin
+  error y pasaba. Con un campo `int64` de un struct, `min: 19456` aceptaba `1024`. Ahora
+  validan todos los tipos numéricos de Go, incluidos los tipos con nombre. Los enteros se
+  comparan como `int64` (sin pasar por `float64`) y un `uint64` mayor que `math.MaxInt64`
+  se trata como mayor que cualquier límite.
+- `greater_than`, `greater_than_equal`, `less_than` y `less_than_equal` rechazaban con
+  `debe ser un número o una fecha válida` los valores `int8`/`int16`/`int32`, `uint*` y
+  `float32`, porque solo reconocían `int`, `int64` y `float64`. Un `float32` se convierte
+  por su representación decimal corta, así que `float32(0.1)` se compara como `0.1`.
+- `before` y `after` solo comparaban como número los valores `int`; un `int64` u otro tipo
+  numérico caía en la rama de fechas y fallaba. Ahora usan la misma conversión numérica.
 - La regla `ip` provocaba un panic cuando el valor no era un string (por ejemplo un
   número). Ahora ignora los valores que no son string, igual que `nil` y `""`.
 - Las reglas `before` y `after` provocaban un panic cuando el valor, o el campo contra el
@@ -75,6 +111,9 @@ proyecto intenta seguir [Semantic Versioning](https://semver.org/lang/es/).
 
 ### Tests
 
+- Pruebas que recorren todos los tipos numéricos de Go en `min`, `max`, `greater_than*`,
+  `less_than*`, `before` y `after` (`validate/numeric_types_test.go`), más el caso de un
+  campo `int64` validado a través de `ValidateStruct`.
 - Pruebas de regresión para los panics de `ip`, `before` y `after`, y para `len`, `uuid`
   y los cambios de `min` y `max`.
 - Suite de pruebas de regresión a nivel raíz (`validate_test.go`, `struct_test.go`) para
