@@ -51,7 +51,13 @@ func Before(input string, value any, payload map[string]any, options []string, s
 		formato = options[1]
 	}
 
-	date, err_date := time.Parse(formato, value.(string))
+	valueStr, isString := value.(string)
+	if !isString {
+		errors = addError(input, "before", errors, "La fecha proporcionada no es válida o no coincide con el formato "+formato)
+		return errors
+	}
+
+	date, err_date := time.Parse(formato, valueStr)
 	if err_date != nil {
 		errors = addError(input, "before", errors, "La fecha proporcionada no es válida o no coincide con el formato "+formato)
 		return errors
@@ -63,14 +69,20 @@ func Before(input string, value any, payload map[string]any, options []string, s
 			if len(options) >= 2 {
 				formato = options[1]
 			}
-			fecha_comparar, err_fecha := time.Parse(formato, fecha_str.(string))
+			fecha_str_val, isCompareString := fecha_str.(string)
+			if !isCompareString {
+				errors = addError(input, "before", errors, "La fecha de comparación no es válida o no coincide con el formato "+formato)
+				return errors
+			}
+
+			fecha_comparar, err_fecha := time.Parse(formato, fecha_str_val)
 
 			if err_fecha != nil {
 				errors = addError(input, "before", errors, "La fecha de comparación no es válida o no coincide con el formato "+formato)
 				return errors
 			}
 			if !date.Before(fecha_comparar) {
-				tmpError := "La fecha no es anterior a la fecha " + fecha_str.(string)
+				tmpError := "La fecha no es anterior a la fecha " + fecha_str_val
 
 				customeErrorKey := fmt.Sprintf("%s.before", input)
 				if customeError, exists := customeErrors[customeErrorKey]; exists {

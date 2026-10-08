@@ -270,3 +270,28 @@ func TestAfter_IntComparisonCustomErrorMessage(t *testing.T) {
 		t.Fatalf("expected custom error message, got %v", errors)
 	}
 }
+
+func TestAfter_NonStringValueNoPanic(t *testing.T) {
+	for _, v := range []any{true, 3.5, []any{1}, map[string]any{"k": 1}} {
+		errors := make(map[string]interface{})
+		errors = After("date", v, map[string]any{}, []string{"2024-01-01"}, "", errors, testAddError, map[string]string{})
+
+		msgs, found := getErrorMsgs(errors, "date", "after")
+		want := "El valor no es una fecha válida"
+		if !found || msgs[0] != want {
+			t.Fatalf("value %v: msgs = %v, want %q", v, msgs, want)
+		}
+	}
+}
+
+func TestAfter_NonStringCompareFieldNoPanic(t *testing.T) {
+	errors := make(map[string]interface{})
+	payload := map[string]any{"other": 5}
+	errors = After("date", "2024-01-01", payload, []string{"other"}, "", errors, testAddError, map[string]string{})
+
+	msgs, found := getErrorMsgs(errors, "date", "after")
+	want := "La fecha de comparación no es válida o no coincide con el formato 2006-01-02"
+	if !found || msgs[0] != want {
+		t.Fatalf("msgs = %v, want %q", msgs, want)
+	}
+}

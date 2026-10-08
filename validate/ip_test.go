@@ -137,3 +137,14 @@ func TestIp_ListCustomError(t *testing.T) {
 		t.Fatalf("expected custom error message, got %v", errors)
 	}
 }
+
+func TestIp_NonStringValueNoErrorNoPanic(t *testing.T) {
+	for _, v := range []any{5, 3.14, true, []string{"1.1.1.1"}, map[string]any{}} {
+		errors := make(map[string]interface{})
+		errors = Ip("ip", v, map[string]any{}, []string{}, "", errors, testAddError, map[string]string{})
+
+		if len(errors) != 0 {
+			t.Fatalf("value %v: expected no errors, got %v", v, errors)
+		}
+	}
+}

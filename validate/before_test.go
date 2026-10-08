@@ -274,3 +274,28 @@ func TestBefore_UnparseableLiteralOptionFails(t *testing.T) {
 		t.Fatalf("msgs = %v, want %q", msgs, want)
 	}
 }
+
+func TestBefore_NonStringValueNoPanic(t *testing.T) {
+	for _, v := range []any{true, 3.5, []any{1}, map[string]any{"k": 1}} {
+		errors := make(map[string]interface{})
+		errors = Before("date", v, map[string]any{}, []string{"2024-01-01"}, "", errors, testAddError, map[string]string{})
+
+		msgs, found := getErrorMsgs(errors, "date", "before")
+		want := "La fecha proporcionada no es válida o no coincide con el formato 2006-01-02"
+		if !found || msgs[0] != want {
+			t.Fatalf("value %v: msgs = %v, want %q", v, msgs, want)
+		}
+	}
+}
+
+func TestBefore_NonStringCompareFieldNoPanic(t *testing.T) {
+	errors := make(map[string]interface{})
+	payload := map[string]any{"other": 5}
+	errors = Before("date", "2024-01-01", payload, []string{"other"}, "", errors, testAddError, map[string]string{})
+
+	msgs, found := getErrorMsgs(errors, "date", "before")
+	want := "La fecha de comparación no es válida o no coincide con el formato 2006-01-02"
+	if !found || msgs[0] != want {
+		t.Fatalf("msgs = %v, want %q", msgs, want)
+	}
+}

@@ -7,11 +7,11 @@ import (
 )
 
 func Ip(input string, value any, payload map[string]any, options []string, sliceIndex string, errors map[string]interface{}, addError func(string, string, map[string]interface{}, string) map[string]interface{}, customeErrors map[string]string) map[string]interface{} {
-	if value == nil || value == "" {
+	ip, ok := value.(string)
+	if !ok || ip == "" {
 		return errors
 	}
 
-	ip := value.(string)
 	if !strings.Contains(ip, ",") {
 		if net.ParseIP(strings.TrimSpace(ip)) == nil {
 			tmpError := "La dirección IP " + ip + " no es una dirección IP válida"
