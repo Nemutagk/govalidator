@@ -143,13 +143,14 @@ struct convertido a mapa).
 | `len` | `[n]` | Longitud exacta: `n` caracteres (string, cuenta caracteres y no bytes), `n` elementos (slice/array) o `n` claves (map). Otros tipos (números, `bool`, `nil`) se ignoran. Sin `Options` o con un valor no numérico agrega un error. |
 | `greater_than` / `greater_than_equal` | `[objetivo, layoutPropio?, layoutObjetivo?]` | Compara números o fechas. `objetivo` puede ser un literal o el nombre de otro campo del payload. |
 | `less_than` / `less_than_equal` | igual que arriba | Idéntico pero en sentido inverso. |
-| `before` / `after` | `[objetivo, formato?]` | Compara fechas contra otro campo, un literal, o las palabras `now`/`today`/`tomorrow`/`yesterday`. |
+| `before` / `after` | `[objetivo, formato?]` | Compara fechas contra otro campo, un literal, o las palabras `now`/`today`/`tomorrow`/`yesterday`. Si el valor, o el campo contra el que se compara, no es un string con formato de fecha válido, agrega un error de fecha inválida. |
 | `date` | `[layout?]` | Es una fecha válida con el layout dado (default `2006-01-02T15:04:05`). |
 | `date_format` | `[layout]` | Igual, pero el layout es obligatorio. |
 | `boolean` | — | El valor es literalmente `bool` (no acepta `"true"`/`1`; para eso ver el normalizer `to_bool`). |
 | `type` | `[tipo, "nullable"?]` | El tipo de Go del valor (`reflect.TypeOf(...).String()`) coincide con `Options[0]`, ej. `"string"`, `"int"`, `"float64"`. |
 | `array` | — | El valor es un slice o array. |
-| `ip` | — | Una o varias (separadas por coma) direcciones IPv4/IPv6 válidas. |
+| `ip` | — | Una o varias (separadas por coma) direcciones IPv4/IPv6 válidas. Ignora `nil`, `""` y valores que no son string. |
+| `uuid` | `[formato?, versión?, ...]` | UUID real de versión 4 a 8 (v7 incluido). Las `Options` se clasifican por su valor, en cualquier orden y en cualquier cantidad. Formatos: `canonical` (default, `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`), `simple` (32 hex sin guiones), `braces` (`{...}`), `urn` (`urn:uuid:...`); varios formatos se combinan con OR. Versiones: `4`, `5`, `6`, `7`, `8` (sin versión acepta cualquiera de las cinco); varias versiones también se combinan con OR, y el grupo de formatos y el de versiones se combinan con AND. Rechaza el UUID nil, el max, variantes que no son RFC 4122 y UUID inventados (los 30 dígitos hex sin versión ni variante son todos iguales). No valida fechas. Una opción desconocida agrega un error. Ignora `nil`, `""` y valores que no son string. |
 | `password` | — | Mínimo 6 caracteres, con al menos un número, una minúscula, una mayúscula y un carácter especial (`$#%&/()!_-`). Acumula todos los errores que falten, no se detiene en el primero. |
 | `required_with` | `[otroCampo, valorEsperado?]` | Requerido si `otroCampo` está definido (y, opcionalmente, si vale `valorEsperado`). |
 | `required_with_all` | `[campo1, campo2, ...]` | Requerido si **todos** esos campos están definidos. |

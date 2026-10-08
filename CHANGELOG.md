@@ -29,6 +29,10 @@ proyecto intenta seguir [Semantic Versioning](https://semver.org/lang/es/).
 - Regla `len`: valida una longitud exacta (`Options[0]`). Para `string` cuenta
   caracteres (no bytes), para slice/array/map cuenta elementos; los demás tipos se
   ignoran. Sin `Options` o con un valor no numérico agrega un error en vez de fallar.
+- Regla `uuid`: valida un UUID real de versión 4 a 8 (v7 incluido). `Options`
+  opcionales, clasificadas por valor y sin importar el orden: formatos (`canonical` por
+  default, `simple`, `braces`, `urn`) y versiones (`4` a `8`). Rechaza nil, max,
+  variantes que no son RFC 4122 y UUID repetitivos inventados. No valida fechas.
 - `README.md` y `CHANGELOG.md`.
 
 ### Changed
@@ -45,6 +49,11 @@ proyecto intenta seguir [Semantic Versioning](https://semver.org/lang/es/).
 
 ### Fixed
 
+- La regla `ip` provocaba un panic cuando el valor no era un string (por ejemplo un
+  número). Ahora ignora los valores que no son string, igual que `nil` y `""`.
+- Las reglas `before` y `after` provocaban un panic cuando el valor, o el campo contra el
+  que se comparan, no era un string (por ejemplo `bool`, `float64`, un slice o un map).
+  Ahora agregan el error de fecha inválida correspondiente.
 - Una regla sin punto (ej. `payload` o `items`) sobre un campo cuyo valor es un
   struct/objeto anidado (`map[string]any`) siempre fallaba, sin importar qué tan válido
   fuera el contenido, con un mensaje de error duplicado
@@ -66,5 +75,7 @@ proyecto intenta seguir [Semantic Versioning](https://semver.org/lang/es/).
 
 ### Tests
 
+- Pruebas de regresión para los panics de `ip`, `before` y `after`, y para `len`, `uuid`
+  y los cambios de `min` y `max`.
 - Suite de pruebas de regresión a nivel raíz (`validate_test.go`, `struct_test.go`) para
   los tres fixes anteriores y para el nuevo sistema de `Normalizers`.
