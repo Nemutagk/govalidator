@@ -26,7 +26,7 @@ func getNestedValue(body map[string]any, path string) (any, bool) {
 
 // RequiredIf makes the field required when the node at opts[0] (dot-notation path) exists in body.
 // If opts[1] is also provided, the field is only required when the node value equals opts[1].
-func RequiredIf(inputName string, value any, body map[string]any, opts []string, sliceIndex string, allErrors map[string]any, addError func(string, string, map[string]any, string) map[string]any, customeallErrors map[string]string) map[string]any {
+func RequiredIf(inputName string, value any, body map[string]any, opts []string, sliceIndex string, allErrors map[string]any, addError func(string, string, map[string]any, string) map[string]any, customErrors map[string]string) map[string]any {
 	if len(opts) < 1 {
 		return addError(inputName, "required_if", allErrors, "La regla required_if requiere al menos 1 parámetro (ruta del nodo)")
 	}
@@ -56,7 +56,7 @@ func RequiredIf(inputName string, value any, body map[string]any, opts []string,
 		}
 
 		tmpErrorKey := fmt.Sprintf("%s.required_if", inputName)
-		if customeError, exists := customeallErrors[tmpErrorKey]; exists {
+		if customeError, exists := customErrors[tmpErrorKey]; exists {
 			tmpError = customeError
 		}
 

@@ -10,7 +10,7 @@ type StructOptions struct {
 	Tag string
 }
 
-func ValidateStruct[T any](s T, inputs []Input, customeallErrors map[string]string, models map[string]func(data any, payload map[string]any, opts *[]string) (bool, string), opts ...StructOptions) (T, error) {
+func ValidateStruct[T any](s T, inputs []Input, customErrors map[string]string, models map[string]func(data any, payload map[string]any, opts *[]string) (bool, string), opts ...StructOptions) (T, error) {
 	var zero T
 
 	tag := "json"
@@ -24,7 +24,7 @@ func ValidateStruct[T any](s T, inputs []Input, customeallErrors map[string]stri
 	}
 
 	// log.Printf("body: %+v", body)
-	safePayload, err := ValidateRequest(body, inputs, customeallErrors, models)
+	safePayload, err := ValidateRequest(body, inputs, customErrors, models)
 	if err != nil {
 		return zero, err
 	}

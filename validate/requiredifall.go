@@ -7,7 +7,7 @@ import (
 
 // RequiredIfAll makes the field required only when ALL key/value pairs in opts hold true (AND).
 // opts must be a flat, even-length slice of pairs: [path1, value1, path2, value2, ...].
-func RequiredIfAll(inputName string, value any, body map[string]any, opts []string, sliceIndex string, allErrors map[string]any, addError func(string, string, map[string]any, string) map[string]any, customeallErrors map[string]string) (map[string]any, bool) {
+func RequiredIfAll(inputName string, value any, body map[string]any, opts []string, sliceIndex string, allErrors map[string]any, addError func(string, string, map[string]any, string) map[string]any, customErrors map[string]string) (map[string]any, bool) {
 	total := len(opts)
 	if total < 2 || total%2 != 0 {
 		return addError(inputName, "required_if_all", allErrors, "La regla required_if_all requiere un número par de parámetros (pares de ruta del nodo y valor esperado)"), true
@@ -32,7 +32,7 @@ func RequiredIfAll(inputName string, value any, body map[string]any, opts []stri
 		}
 
 		tmpErrorKey := fmt.Sprintf("%s.required_if_all", inputName)
-		if customeError, exists := customeallErrors[tmpErrorKey]; exists {
+		if customeError, exists := customErrors[tmpErrorKey]; exists {
 			tmpError = customeError
 		}
 		return addError(inputName, "required_if_all", allErrors, tmpError), true
