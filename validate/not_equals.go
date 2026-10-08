@@ -20,7 +20,7 @@ func NotEqual(input string, value any, payload map[string]any, options []string,
 		return errors
 	}
 
-	if value == options[0] {
+	if equalsOption(value, options[0]) {
 		tmpError := fmt.Sprintf("El valor es igual a %v", options[0])
 
 		if sliceIndex != "" {

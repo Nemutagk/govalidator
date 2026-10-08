@@ -9,7 +9,7 @@ func NotIn(input string, value any, payload map[string]any, options []string, sl
 
 	encontrado := false
 	for _, option := range options {
-		if option == value {
+		if equalsOption(value, option) {
 			encontrado = true
 			break
 		}
@@ -22,9 +22,10 @@ func NotIn(input string, value any, payload map[string]any, options []string, sl
 			tmpError = fmt.Sprintf("El valor en la posición %s se encontró en las opciones prohibidas", sliceIndex)
 		}
 
-		customeErrorKey := fmt.Sprintf("%s.notin", input)
-		if customeError, exists := customeErrors[customeErrorKey]; exists {
-			tmpError = customeError
+		for _, suffix := range []string{"notin", "not_in"} {
+			if customeError, exists := customeErrors[input+"."+suffix]; exists {
+				tmpError = customeError
+			}
 		}
 
 		errors = addError(input, "notin", errors, tmpError)

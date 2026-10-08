@@ -23,7 +23,7 @@ func Equal(input string, value any, payload map[string]any, options []string, sl
 	}
 
 	// log.Printf("======> Comparing value: %v with option: %v", value, options[0])
-	if value != options[0] {
+	if !equalsOption(value, options[0]) {
 		tmpError := fmt.Sprintf("El valor no es igual a %v", options[0])
 
 		if sliceIndex != "" {

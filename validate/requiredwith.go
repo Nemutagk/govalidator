@@ -53,7 +53,7 @@ func RequiredWith(input string, value any, payload map[string]any, options []str
 		return errors, false
 	}
 
-	if len(options) == 2 && existsWithValue == options[1] {
+	if len(options) == 2 && equalsOption(existsWithValue, options[1]) {
 		tmpError := fmt.Sprintf("El campo '%s' debe estar definido cuando el campo '%s' está definido y el valor es '%s'", input, options[0], options[1])
 
 		if sliceIndex != "" {
@@ -65,7 +65,7 @@ func RequiredWith(input string, value any, payload map[string]any, options []str
 			tmpError = customeError
 		}
 
-		if val, ok := payload[input]; !ok || helper.IsEmpty(val) || val != options[1] {
+		if val, ok := payload[input]; !ok || helper.IsEmpty(val) || !equalsOption(val, options[1]) {
 			errors = addError(input, "required_with", errors, tmpError)
 			return errors, inputMissing()
 		}

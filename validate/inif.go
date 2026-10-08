@@ -28,7 +28,7 @@ func InIf(input string, value any, body map[string]any, opts []string, sliceInde
 	}
 
 	for _, option := range allowed {
-		if option == value {
+		if equalsOption(value, option) {
 			return errors
 		}
 	}

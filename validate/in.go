@@ -9,7 +9,7 @@ func In(input string, value any, payload map[string]any, options []string, slice
 
 	encontrado := false
 	for _, option := range options {
-		if option == value {
+		if equalsOption(value, option) {
 			encontrado = true
 			break
 		}

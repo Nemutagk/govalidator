@@ -10,9 +10,10 @@ func Nullable(input string, value any, payload map[string]any, options []string,
 			tmpError = fmt.Sprintf("El campo \"%s\" en la posición %s no existe", input, sliceIndex)
 		}
 
-		customeErrorKey := fmt.Sprintf("%s.null", input)
-		if customeError, exists := customeErrors[customeErrorKey]; exists {
-			tmpError = customeError
+		for _, suffix := range []string{"null", "nullable"} {
+			if customeError, exists := customeErrors[input+"."+suffix]; exists {
+				tmpError = customeError
+			}
 		}
 
 		errors = addError(input, "null", errors, tmpError)
