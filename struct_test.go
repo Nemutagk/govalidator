@@ -9,7 +9,7 @@ const namedStatusActive namedStatusType = "active"
 type namedPriorityType int
 
 type namedStatusPayload struct {
-	Status   namedStatusType `json:"status"`
+	Status   namedStatusType   `json:"status"`
 	Priority namedPriorityType `json:"priority"`
 }
 

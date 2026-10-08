@@ -7,10 +7,10 @@ import (
 
 func TestToFloat64(t *testing.T) {
 	cases := []struct {
-		name    string
-		value   any
-		want    float64
-		wantOk  bool
+		name   string
+		value  any
+		want   float64
+		wantOk bool
 	}{
 		{"int", 10, 10, true},
 		{"int64", int64(20), 20, true},
