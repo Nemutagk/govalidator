@@ -3,6 +3,8 @@ package validate
 import (
 	"fmt"
 	"strings"
+
+	"github.com/Nemutagk/govalidator/v2/helper"
 )
 
 // getNestedValue traverses body using a dot-notation path and returns the value and whether it was found.
@@ -11,7 +13,7 @@ func getNestedValue(body map[string]any, path string) (any, bool) {
 	current := any(body)
 
 	for _, part := range parts {
-		m, ok := current.(map[string]any)
+		m, ok := helper.AsStringMap(current)
 		if !ok {
 			return nil, false
 		}

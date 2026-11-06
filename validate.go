@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/Nemutagk/govalidator/v2/helper"
 	"github.com/Nemutagk/govalidator/v2/normalize"
 	"github.com/Nemutagk/govalidator/v2/validate"
 )
@@ -239,10 +240,8 @@ func rangeInputs(body map[string]any, inputs []Input, customErrors map[string]st
 						}
 						resultSlice = append(resultSlice, elem)
 					} else {
-						var elemBody map[string]any
-						if m, ok := elem.(map[string]any); ok {
-							elemBody = m
-						} else {
+						elemBody, ok := helper.AsStringMap(elem)
+						if !ok {
 							elemBody = make(map[string]any)
 						}
 						elemInput := Input{Name: remaining, Rules: input.Rules, parent: input.parent, Normalizers: input.Normalizers}
@@ -310,7 +309,11 @@ func rangeInputs(body map[string]any, inputs []Input, customErrors map[string]st
 				if pathPrefix != "" {
 					newPrefix = pathPrefix + "." + inputName
 				}
-				tmpPayload, tmpErrors, tmpSometimes := rangeInputs(make(map[string]any), []Input{input}, customErrors, models, sliceIndex, newPrefix, rootBody)
+				sub, ok := helper.AsStringMap(value)
+				if !ok {
+					sub = make(map[string]any)
+				}
+				tmpPayload, tmpErrors, tmpSometimes := rangeInputs(sub, []Input{input}, customErrors, models, sliceIndex, newPrefix, rootBody)
 				if _, ok := safePayload[inputName]; !ok {
 					safePayload[inputName] = make(map[string]any)
 				}

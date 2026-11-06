@@ -73,3 +73,28 @@ func IsEmpty(v any) bool {
 		return false
 	}
 }
+
+// AsStringMap devuelve un map con claves string o enteras (map[string]string, map[int]int...)
+// como map[string]any, con las claves en texto, para recorrerlo con notación de punto. Un
+// map[string]any se devuelve tal cual (sin copiar) para que las escrituras sigan llegando al
+// original. ok es false si el valor no es un map o su clave es de otro tipo.
+// shortcut: una clave que contiene un punto no se puede direccionar con 'a.b'.
+func AsStringMap(value any) (map[string]any, bool) {
+	if m, ok := value.(map[string]any); ok {
+		return m, true
+	}
+
+	rv := reflect.ValueOf(value)
+	if rv.Kind() != reflect.Map {
+		return nil, false
+	}
+	if k := rv.Type().Key().Kind(); k != reflect.String && (k < reflect.Int || k > reflect.Uint64) {
+		return nil, false
+	}
+
+	result := make(map[string]any, rv.Len())
+	for iter := rv.MapRange(); iter.Next(); {
+		result[fmt.Sprint(iter.Key().Interface())] = iter.Value().Interface()
+	}
+	return result, true
+}
