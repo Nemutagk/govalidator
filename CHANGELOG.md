@@ -33,6 +33,13 @@ proyecto intenta seguir [Semantic Versioning](https://semver.org/lang/es/).
   opcionales, clasificadas por valor y sin importar el orden: formatos (`canonical` por
   default, `simple`, `braces`, `urn`) y versiones (`4` a `8`). Rechaza nil, max,
   variantes que no son RFC 4122 y UUID repetitivos inventados. No valida fechas.
+- Reglas con notación de punto sobre maps tipados con claves `string` o enteras
+  (`map[string]string`, `map[int]int`, `map[int]string`...), por ejemplo `name.es` o
+  `scores.1`. Antes solo se podían recorrer los `map[string]any`, y cualquier regla con
+  punto sobre un map tipado fallaba aunque la clave existiera. También aplica a los
+  maps dentro de un slice (`items.*.name` con `[]map[string]string`) y a las rutas de
+  `required_if`, `required_if_all` e `in_if`. Las reglas sin punto siguen viendo el map
+  original y los `map[string]any` no se copian.
 - `README.md` y `CHANGELOG.md`.
 
 ### Changed
@@ -114,6 +121,7 @@ proyecto intenta seguir [Semantic Versioning](https://semver.org/lang/es/).
 - Pruebas que recorren todos los tipos numéricos de Go en `min`, `max`, `greater_than*`,
   `less_than*`, `before` y `after` (`validate/numeric_types_test.go`), más el caso de un
   campo `int64` validado a través de `ValidateStruct`.
+- Pruebas de maps tipados en `maps_test.go`.
 - Pruebas de regresión para los panics de `ip`, `before` y `after`, y para `len`, `uuid`
   y los cambios de `min` y `max`.
 - Suite de pruebas de regresión a nivel raíz (`validate_test.go`, `struct_test.go`) para

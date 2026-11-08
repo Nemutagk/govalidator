@@ -246,6 +246,8 @@ También puedes apuntar a un índice específico (`items.0.sku`) en vez de `*`, 
 de valores primitivos (`[]string`, `[]int`, etc.) con `Name: "tags"` + `Rules` aplicadas
 directo sobre cada valor.
 
+También puedes validar los valores de un map por su clave con la misma notación de punto, sea `map[string]any` o un map tipado con claves `string` o enteras (`map[string]string`, `map[int]int`, `map[int]string`, `map[uint8]bool`...). Las claves enteras se escriben como texto: `scores.1` valida `Scores[1]`. Una regla sin punto (`name`, `type`, `len`, `customized`) sigue recibiendo el map original. Límites: una clave que contiene un punto no se puede direccionar, un map con claves de otro tipo (por ejemplo `float64`) no se recorre por clave, y un map con valores `func` no puede llevar reglas en `ValidateStruct` porque el resultado se reconstruye vía JSON (con `ValidateRequest` sí).
+
 ## Normalizers (pre-proceso de valores)
 
 Un `Normalizer` transforma el valor de un campo **antes** de que corran sus `Rules`.
